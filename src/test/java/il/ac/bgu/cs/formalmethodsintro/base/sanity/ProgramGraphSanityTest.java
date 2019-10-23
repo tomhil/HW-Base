@@ -19,7 +19,7 @@ public class ProgramGraphSanityTest {
     @Test
     public void consistencyChecks() {
 		ProgramGraph<String, String> sut = FvmFacade.get().createProgramGraph();
-        sut.addTransition( new PGTransition<>("from","true","act","to") );
+        sut.addTransition( new PGTransition<>("from","true","act","to") ); 
         assertEquals( Set.of("from","to"), sut.getLocations());
         
         sut.setInitial("newLocation", true);

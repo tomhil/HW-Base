@@ -1,29 +1,58 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
-import il.ac.bgu.cs.formalmethodsintro.base.examples.VendingMachineBuilder;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.util.GraphvizPainter;
 
 /**
- * Use this class to draw transition systems using Graphviz.
- * See {@linkplain http://graphviz.org} on usage etc.
+ * Use {@link GraphvizPainter} to draw transition systems using Graphviz. See
+ * {@linkplain http://graphviz.org} on usage etc.
  */
 public class GraphvizSamples {
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void main(String[] args) {
-//        TransitionSystem ts = TSTestUtils.makeCircularTsWithReset(5);
-        TransitionSystem ts = new VendingMachineBuilder().build();
-        
-        
-//        TransitionSystem<States,Actions,APs> ts = TSTestUtils.threeStateTS();
-//        GraphvizPainter<States,Actions,APs> gvp = new GraphvizPainter<>(
-//                s->s.name(), a->a.name(), p->p.name()
-//        );
-//        
-//        System.out.println(gvp.makeDotCode(ts));
-        
-        System.out.println( GraphvizPainter.toStringPainter().makeDotCode(ts) );
-    }
-    
+	static FvmFacade fvmFacadeImpl = FvmFacade.get();
+
+	public enum STATE {
+		pay, soda, beer, select
+	};
+
+	public enum ACTION {
+		insertCoin, getSoda, getBeer, tau
+	}
+
+	@SuppressWarnings({ "unchecked" })
+	public static void main(String[] args) {
+		TransitionSystem<STATE, ACTION, String> vendingMachine = FvmFacade.get().createTransitionSystem();
+
+		vendingMachine.addState(STATE.pay);
+		vendingMachine.addState(STATE.soda);
+		vendingMachine.addState(STATE.select);
+		vendingMachine.addState(STATE.beer);
+
+		vendingMachine.addInitialState(STATE.pay);
+
+		vendingMachine.addAction(ACTION.insertCoin);
+		vendingMachine.addAction(ACTION.getBeer);
+		vendingMachine.addAction(ACTION.getSoda);
+		vendingMachine.addAction(ACTION.tau);
+
+		vendingMachine.addTransition(new Transition<>(STATE.pay, ACTION.insertCoin, STATE.select));
+		vendingMachine.addTransition(new Transition<>(STATE.select, ACTION.tau, STATE.soda));
+		vendingMachine.addTransition(new Transition<>(STATE.select, ACTION.tau, STATE.beer));
+		vendingMachine.addTransition(new Transition<>(STATE.soda, ACTION.getSoda, STATE.pay));
+		vendingMachine.addTransition(new Transition<>(STATE.beer, ACTION.getBeer, STATE.pay));
+
+		vendingMachine.addAtomicProposition("paid");
+		vendingMachine.addAtomicProposition("drink");
+
+		vendingMachine.addToLabel(STATE.soda, "paid");
+		vendingMachine.addToLabel(STATE.beer, "paid");
+		vendingMachine.addToLabel(STATE.select, "paid");
+		vendingMachine.addToLabel(STATE.soda, "drink");
+		vendingMachine.addToLabel(STATE.beer, "drink");
+
+		// You can copy the resulting string to, e.g., https://dreampuf.github.io/GraphvizOnline
+		System.out.println(GraphvizPainter.toStringPainter().makeDotCode(vendingMachine));
+	}
+
 }
