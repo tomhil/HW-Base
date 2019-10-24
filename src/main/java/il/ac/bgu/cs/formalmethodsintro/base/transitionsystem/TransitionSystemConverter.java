@@ -1,9 +1,9 @@
 package il.ac.bgu.cs.formalmethodsintro.base.transitionsystem;
 
-import il.ac.bgu.cs.formalmethodsintro.base.FvmFacade;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.Map;
 import java.util.function.Function;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Converts a transition system of one type to another.
@@ -34,7 +34,7 @@ public class TransitionSystemConverter<S1,S2, A1,A2, P1,P2> {
         Map<A1,A2> actions = original.getActions().stream().collect(toMap(Function.identity(), actionConverter::apply));
         Map<P1,P2> aps = original.getAtomicPropositions().stream().collect(toMap(Function.identity(), apConverter::apply));
         
-        TransitionSystem<S2, A2, P2> result = FvmFacade.get().createTransitionSystem();
+        TransitionSystem<S2, A2, P2> result = new TransitionSystem<>();	
         result.addAllStates( states.values() );
         result.addAllActions( actions.values() );
         result.addAllAtomicPropositions( aps.values() );

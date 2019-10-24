@@ -1,6 +1,9 @@
 package il.ac.bgu.cs.formalmethodsintro.base.nanopromela;
 
 
+import static il.ac.bgu.cs.formalmethodsintro.base.util.CollectionHelper.map;
+import static il.ac.bgu.cs.formalmethodsintro.base.util.CollectionHelper.p;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +13,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.Boolex
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.IntexprContext;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.JoinedContext;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.StmtContext;
-import static il.ac.bgu.cs.formalmethodsintro.base.util.CollectionHelper.map;
-import static il.ac.bgu.cs.formalmethodsintro.base.util.CollectionHelper.p;
 
 
 public class Evaluator {

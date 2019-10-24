@@ -14,6 +14,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.Boolex
  * An object that identifies and interprets the conditions defined in the
  * grammar nanopromela/NanoPromela.g4
  */
+@SuppressWarnings("deprecation")
 public class ParserBasedCondDef implements ConditionDef {
 
 	/**

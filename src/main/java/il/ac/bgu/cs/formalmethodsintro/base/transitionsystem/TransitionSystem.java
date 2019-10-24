@@ -1,19 +1,19 @@
 package il.ac.bgu.cs.formalmethodsintro.base.transitionsystem;
 
-import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedActionException;
-import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedAtomicPropositionException;
-import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedStateException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
+import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedActionException;
+import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedAtomicPropositionException;
+import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedStateException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.FVMException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.TransitionSystemPart;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Objects;
 
 /**
  * Interface of a transition system, as defined in page 20 of the book.
@@ -453,7 +453,8 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
     }
 
     
-    public class TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> {
+    @SuppressWarnings("hiding")
+	public class TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> {
         final TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> ts;
         final STATE from;
         
@@ -467,7 +468,8 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
         }
     }
     
-    public class TransitionBuilder_2<STATE,ACTION,ATOMIC_PROPOSITION> {
+    @SuppressWarnings("hiding")
+	public class TransitionBuilder_2<STATE,ACTION,ATOMIC_PROPOSITION> {
         final TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> prev;
         final ACTION action;
 

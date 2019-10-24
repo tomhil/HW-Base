@@ -2,6 +2,7 @@ package il.ac.bgu.cs.formalmethodsintro.base;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import il.ac.bgu.cs.formalmethodsintro.base.automata.Automaton;
@@ -18,8 +19,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.util.Pair;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
 
-import java.util.Map;
-
 /**
  * Interface for the entry point class to the HW in this class. Our
  * client/testing code interfaces with the student solutions through this
@@ -35,7 +34,6 @@ public class FvmFacade {
      * 
      * @return an instance of this class.
      */
-    @SuppressWarnings("unchecked")
     public static FvmFacade get() {
         if ( INSTANCE == null ) { 
             INSTANCE = new FvmFacade();
@@ -51,9 +49,9 @@ public class FvmFacade {
      * @param <P> Type of atomic propositions.
      * @return A new transition system object.
      */
-    public <S, A, P> TransitionSystem<S, A, P> createTransitionSystem() {
-        return new TransitionSystem<>();
-    }
+//    public <S, A, P> TransitionSystem<S, A, P> createTransitionSystem() {
+//        return new TransitionSystem<>();
+//    }
 
     /**
      * Checks whether an action is deterministic (as defined in class), in the

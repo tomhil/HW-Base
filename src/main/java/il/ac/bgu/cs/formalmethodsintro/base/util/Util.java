@@ -1,5 +1,7 @@
 package il.ac.bgu.cs.formalmethodsintro.base.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -8,8 +10,6 @@ import java.util.stream.Stream;
 import il.ac.bgu.cs.formalmethodsintro.base.automata.Automaton;
 import il.ac.bgu.cs.formalmethodsintro.base.automata.MultiColorAutomaton;
 import il.ac.bgu.cs.formalmethodsintro.base.ltl.LTL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Utility methods for implementation.

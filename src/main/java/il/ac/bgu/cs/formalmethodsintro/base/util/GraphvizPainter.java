@@ -1,16 +1,18 @@
 package il.ac.bgu.cs.formalmethodsintro.base.util;
 
-import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.joining;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import static java.util.Collections.emptySet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static java.util.stream.Collectors.joining;
+
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 
 /**
  * Takes a {@link TransitionSystem}, makes a Graphviz drawing out of it.
@@ -30,7 +32,8 @@ public class GraphvizPainter<S,A,P> {
      * A painter that prints the transition system by calling {@link Object#toString()} on its objects.
      * @return A new painter.
      */
-    public static GraphvizPainter toStringPainter() {
+    @SuppressWarnings("rawtypes")
+	public static GraphvizPainter toStringPainter() {
         return new GraphvizPainter<>(Object::toString,Object::toString,Object::toString);
     }
     

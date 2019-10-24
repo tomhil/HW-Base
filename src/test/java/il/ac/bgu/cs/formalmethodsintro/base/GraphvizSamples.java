@@ -22,7 +22,7 @@ public class GraphvizSamples {
 
 	@SuppressWarnings({ "unchecked" })
 	public static void main(String[] args) {
-		TransitionSystem<STATE, ACTION, String> vendingMachine = FvmFacade.get().createTransitionSystem();
+		TransitionSystem<STATE, ACTION, String> vendingMachine = new TransitionSystem<>();
 
 		vendingMachine.addState(STATE.pay);
 		vendingMachine.addState(STATE.soda);

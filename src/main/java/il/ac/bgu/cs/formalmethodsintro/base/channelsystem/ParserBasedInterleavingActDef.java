@@ -18,6 +18,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ThrowingErrorListener;
  * Channels with zero capacity are marked by an underscore in front of 
  * the channel name.
  */
+@SuppressWarnings("deprecation")
 public class ParserBasedInterleavingActDef implements InterleavingActDef {
 
     @Override
@@ -41,7 +42,7 @@ public class ParserBasedInterleavingActDef implements InterleavingActDef {
      *
      * @return The root of the parse tree or null if cannot parse.
      */
-    private JoinedContext parseAction(String action) {
+	private JoinedContext parseAction(String action) {
         NanoPromelaLexer lexer = new NanoPromelaLexer(new ANTLRInputStream(action));
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -72,7 +73,7 @@ public class ParserBasedInterleavingActDef implements InterleavingActDef {
         return action.equals("") || parseAction((String) action) != null;
     }
 
-    @Override
+	@Override
     public boolean isOneSidedAction(String action) {
         NanoPromelaLexer lexer = new NanoPromelaLexer(new ANTLRInputStream(action));
         CommonTokenStream tokens = new CommonTokenStream(lexer);

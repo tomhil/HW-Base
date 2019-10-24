@@ -71,7 +71,7 @@ public class TSTestUtils {
      * @return a simple transition system.
      */
     public static TransitionSystem<States, Actions, APs> simpleTransitionSystem() {
-        TransitionSystem<States, Actions, APs> ts = FvmFacade.get().createTransitionSystem();
+        TransitionSystem<States, Actions, APs> ts = new TransitionSystem<>();
 
         ts.setName("Simple Transition System");
 
@@ -113,7 +113,7 @@ public class TSTestUtils {
      * @return
      */
     public static TransitionSystem<States, Actions, APs> threeStateTS() {
-        TransitionSystem<States, Actions, APs> ts = FvmFacade.get().createTransitionSystem();
+        TransitionSystem<States, Actions, APs> ts = new TransitionSystem<>();
         ts.setName("Three-state TS");
         ts.addStates(a, b, c);
         ts.addActions(alpha, beta);
@@ -139,7 +139,7 @@ public class TSTestUtils {
      * @return A linear transition system.
      */
     public static <S> TransitionSystem<S, String, String> makeLinearTs(int stateNum, Function<Integer, S> stateFactory) {
-        TransitionSystem<S, String, String> retVal = FvmFacade.get().createTransitionSystem();
+        TransitionSystem<S, String, String> retVal = new TransitionSystem<>();
         retVal.setName("Linear of " + stateNum);
         IntStream.rangeClosed(1, stateNum).mapToObj(stateFactory::apply).forEach(retVal::addState);
         IntStream.rangeClosed(1, stateNum - 1).forEach(i -> retVal.addAction("a" + i));
@@ -207,14 +207,21 @@ public class TSTestUtils {
      */
     public static TransitionSystem<String, String, String> makeBranchingTs(int pathLength, int branchCount) {
         TransitionSystem<String, String, String> retVal = makeLinearTs(pathLength, i -> "s" + i);
+        
         retVal.setName(String.format("branching %d/%d", pathLength, branchCount));
+        
         int branchPoint = pathLength - 3;
+        
         retVal.addAction("fork");
+        
         IntStream.rangeClosed(1, branchCount).forEach(branchNum -> {
             final String statePrefix = "s_" + branchNum + "_";
+            
             IntStream.rangeClosed(branchPoint + 1, pathLength).forEach(i -> retVal.addState(statePrefix + i));
+            
             IntStream.rangeClosed(branchPoint + 1, pathLength - 1)
                     .forEach(i -> retVal.addTransitionFrom(statePrefix + i).action("a" + i).to(statePrefix + (i + 1)));
+            
             retVal.addTransitionFrom("s" + branchPoint).action("fork").to(statePrefix + (branchPoint + 1));
         });
 

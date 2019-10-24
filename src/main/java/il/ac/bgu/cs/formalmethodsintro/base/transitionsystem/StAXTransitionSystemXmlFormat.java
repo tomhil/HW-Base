@@ -23,7 +23,6 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-import il.ac.bgu.cs.formalmethodsintro.base.FvmFacade;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.FVMException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.InvalidTSDescriptionException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.InvalidXmlException;
@@ -177,7 +176,7 @@ public class StAXTransitionSystemXmlFormat implements TransitionSystemXmlFormat 
 			public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
 				switch (qName) {
 				case kTransitionSystem:
-					ts = FvmFacade.get().createTransitionSystem();
+					ts = new TransitionSystem<>();
 					break;
 
 				case kAction:

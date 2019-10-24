@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.StmtContext;
 
+@SuppressWarnings("deprecation")
 public class NanoPromelaFileReader {
     
     public static StmtContext parseNanoPromelaStream( InputStream in ) throws IOException {

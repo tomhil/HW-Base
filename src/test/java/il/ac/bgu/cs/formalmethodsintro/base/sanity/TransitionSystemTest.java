@@ -1,6 +1,5 @@
 package il.ac.bgu.cs.formalmethodsintro.base.sanity;
 
-import il.ac.bgu.cs.formalmethodsintro.base.FvmFacade;
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.AP.P;
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.AP.Q;
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.Actions.A1;
@@ -8,6 +7,10 @@ import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.A
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.States.S1;
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.States.S2;
 import static il.ac.bgu.cs.formalmethodsintro.base.sanity.TransitionSystemTest.States.S3;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +21,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedStateEx
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
-import java.util.Set;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Set of basic tests for {@link TransitionSystem} implementation.
@@ -35,7 +35,7 @@ public class TransitionSystemTest {
 
 	@Before
 	public void before() {
-		ts = FvmFacade.get().createTransitionSystem();
+		ts = new TransitionSystem<>();
 	}
 
 	@Test(timeout=2000)
