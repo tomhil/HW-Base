@@ -32,8 +32,7 @@ public class GraphvizPainter<S,A,P> {
      * A painter that prints the transition system by calling {@link Object#toString()} on its objects.
      * @return A new painter.
      */
-    @SuppressWarnings("rawtypes")
-	public static GraphvizPainter toStringPainter() {
+    public static GraphvizPainter toStringPainter() {
         return new GraphvizPainter<>(Object::toString,Object::toString,Object::toString);
     }
     
