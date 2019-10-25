@@ -453,7 +453,8 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
     }
 
     
-    public class TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> {
+    @SuppressWarnings("hiding")
+	public class TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> {
         final TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> ts;
         final STATE from;
         
@@ -467,7 +468,8 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
         }
     }
     
-    public class TransitionBuilder_2<STATE,ACTION,ATOMIC_PROPOSITION> {
+    @SuppressWarnings("hiding")
+	public class TransitionBuilder_2<STATE,ACTION,ATOMIC_PROPOSITION> {
         final TransitionBuilder_1<STATE,ACTION,ATOMIC_PROPOSITION> prev;
         final ACTION action;
 

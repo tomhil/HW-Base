@@ -14,12 +14,13 @@ import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.Boolex
  * An object that identifies and interprets the conditions defined in the
  * grammar nanopromela/NanoPromela.g4
  */
+@SuppressWarnings("deprecation")
 public class ParserBasedCondDef implements ConditionDef {
 
 	/**
 	 * @see il.ac.bgu.cs.formalmethodsintro.base.programgraph.ConditionDef#evaluate(java.util.Map, java.lang.String)
 	 */
-	@Override
+	@Override 
 	public boolean evaluate(Map<String, Object> eval, String condition) {
 		if (condition.equals(""))
 			return true;
