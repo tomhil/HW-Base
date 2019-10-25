@@ -40,7 +40,7 @@ public class TransitionSystemConverter<S1,S2, A1,A2, P1,P2> {
         result.addAllAtomicPropositions( aps.values() );
         
         original.getTransitions().stream()
-                .map( t -> new Transition<>(states.get(t.getFrom()), actions.get(t.getAction()), states.get(t.getTo()) ) )
+                .map( t -> new TSTransition<>(states.get(t.getFrom()), actions.get(t.getAction()), states.get(t.getTo()) ) )
                 .forEach( result::addTransition );
         
         original.getLabelingFunction()

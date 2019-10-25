@@ -8,7 +8,7 @@ package il.ac.bgu.cs.formalmethodsintro.base.transitionsystem;
  * @param <STATE> Type of the states
  * @param <ACTION> Type of the action
  */
-public class Transition<STATE, ACTION> {
+public class TSTransition<STATE, ACTION> {
 	private final STATE from;
 	private final ACTION action;
 	private final STATE to;
@@ -24,7 +24,7 @@ public class Transition<STATE, ACTION> {
 	 *            The destination of the transition. Should be a name of a
 	 *            state.
 	 */
-	public Transition(STATE aFrom, ACTION anAction, STATE aTo) {
+	public TSTransition(STATE aFrom, ACTION anAction, STATE aTo) {
 		from = aFrom;
 		action = anAction;
 		to = aTo;
@@ -82,7 +82,7 @@ public class Transition<STATE, ACTION> {
 		if (getClass() != obj.getClass())
 			return false;
 		@SuppressWarnings("rawtypes")
-		Transition other = (Transition) obj;
+		TSTransition other = (TSTransition) obj;
 		if (action == null) {
 			if (other.action != null)
 				return false;

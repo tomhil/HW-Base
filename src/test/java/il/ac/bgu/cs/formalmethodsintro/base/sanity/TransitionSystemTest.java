@@ -19,7 +19,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedActionE
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedAtomicPropositionException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.DeletionOfAttachedStateException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
-import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 
 /**
@@ -101,7 +101,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition( new Transition<>(S1, A1, S2) );
+		ts.addTransition( new TSTransition<>(S1, A1, S2) );
 	}
 
 	@Test(timeout=2000)
@@ -109,7 +109,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S3, A1, S2));
+		ts.addTransition(new TSTransition<>(S3, A1, S2));
         assertEquals( Set.of(S1, S2, S3), ts.getStates());
 	}
 
@@ -118,7 +118,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S1, A1, S3));
+		ts.addTransition(new TSTransition<>(S1, A1, S3));
         assertEquals( Set.of(S1, S2, S3), ts.getStates());
 	}
 
@@ -127,7 +127,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S1, A3, S2));
+		ts.addTransition(new TSTransition<>(S1, A3, S2));
 	}
 
 	@Test(expected = DeletionOfAttachedStateException.class, timeout=2000)
@@ -135,7 +135,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S1, A1, S2));
+		ts.addTransition(new TSTransition<>(S1, A1, S2));
 		ts.removeState(S1);
 	}
 	
@@ -144,7 +144,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S1, A1, S2));
+		ts.addTransition(new TSTransition<>(S1, A1, S2));
 		ts.removeState(S2);
 	}
 
@@ -153,7 +153,7 @@ public class TransitionSystemTest {
 		ts.addState(S1);
 		ts.addState(S2);
 		ts.addAction(A1);
-		ts.addTransition(new Transition<>(S1, A1, S2));
+		ts.addTransition(new TSTransition<>(S1, A1, S2));
 		ts.removeAction(A1);
 	}
 	

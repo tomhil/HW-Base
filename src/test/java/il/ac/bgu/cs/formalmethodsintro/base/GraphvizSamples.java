@@ -1,6 +1,6 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
-import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.util.GraphvizPainter;
 
@@ -36,11 +36,11 @@ public class GraphvizSamples {
 		vendingMachine.addAction(ACTION.getSoda);
 		vendingMachine.addAction(ACTION.tau);
 
-		vendingMachine.addTransition(new Transition<>(STATE.pay, ACTION.insertCoin, STATE.select));
-		vendingMachine.addTransition(new Transition<>(STATE.select, ACTION.tau, STATE.soda));
-		vendingMachine.addTransition(new Transition<>(STATE.select, ACTION.tau, STATE.beer));
-		vendingMachine.addTransition(new Transition<>(STATE.soda, ACTION.getSoda, STATE.pay));
-		vendingMachine.addTransition(new Transition<>(STATE.beer, ACTION.getBeer, STATE.pay));
+		vendingMachine.addTransition(new TSTransition<>(STATE.pay, ACTION.insertCoin, STATE.select));
+		vendingMachine.addTransition(new TSTransition<>(STATE.select, ACTION.tau, STATE.soda));
+		vendingMachine.addTransition(new TSTransition<>(STATE.select, ACTION.tau, STATE.beer));
+		vendingMachine.addTransition(new TSTransition<>(STATE.soda, ACTION.getSoda, STATE.pay));
+		vendingMachine.addTransition(new TSTransition<>(STATE.beer, ACTION.getBeer, STATE.pay));
 
 		vendingMachine.addAtomicProposition("paid");
 		vendingMachine.addAtomicProposition("drink");

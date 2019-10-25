@@ -35,7 +35,7 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
 
 	private final Set<STATE> states = new HashSet<>();
 	private final Set<ACTION> actions = new HashSet<>();
-	private final Set<Transition<STATE,ACTION>> transitions = new HashSet<>();
+	private final Set<TSTransition<STATE,ACTION>> transitions = new HashSet<>();
 	private final Set<STATE> initialStates = new HashSet<>();
 	private final Set<ATOMIC_PROPOSITION> atomicPropositions = new HashSet<>();
 	private final HashMap<STATE, Set<ATOMIC_PROPOSITION>> labelingFunction = new HashMap<>();
@@ -170,7 +170,7 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
 	 * @param t The transition to add.
 	 * @throws FVMException If the states or the action does not exist.
 	 */
-	public void addTransition(Transition<STATE,ACTION> t) throws FVMException {
+	public void addTransition(TSTransition<STATE,ACTION> t) throws FVMException {
         addState( t.getFrom() );
         addState( t.getTo() );
         addAction( t.getAction() );
@@ -183,7 +183,7 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
 	 * 
 	 * @param t The transition to remove.
 	 */
-	public void removeTransition(Transition<STATE, ACTION> t) {
+	public void removeTransition(TSTransition<STATE, ACTION> t) {
         transitions.remove( t );
     }
     
@@ -195,7 +195,7 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
      * 
 	 * @return The set of the transitions.
 	 */
-	public Set<Transition<STATE,ACTION>> getTransitions(){
+	public Set<TSTransition<STATE,ACTION>> getTransitions(){
         return Collections.unmodifiableSet(transitions);
     }
 
@@ -479,7 +479,7 @@ public class TransitionSystem<STATE,ACTION,ATOMIC_PROPOSITION> {
         }
         
         public void to(STATE to) {
-            prev.ts.addTransition( new Transition<>(prev.from, action, to));
+            prev.ts.addTransition( new TSTransition<>(prev.from, action, to));
         }
     }
     

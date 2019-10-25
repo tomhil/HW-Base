@@ -1,12 +1,12 @@
 package il.ac.bgu.cs.formalmethodsintro.base.exceptions;
 
-import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 
 @SuppressWarnings("serial")
 public class InvalidTransitionException extends FVMException {
-	Transition<?, ?> transition;
+	TSTransition<?, ?> transition;
 
-	public InvalidTransitionException(Transition<?, ?> transition) {
+	public InvalidTransitionException(TSTransition<?, ?> transition) {
 		super("An asttempt to add an invalid transition (" + transition + ")");
 		this.transition = transition;
 	}

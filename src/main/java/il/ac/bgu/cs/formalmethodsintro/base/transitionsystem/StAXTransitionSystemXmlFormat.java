@@ -241,7 +241,7 @@ public class StAXTransitionSystemXmlFormat implements TransitionSystemXmlFormat 
 						errors.add(new InvalidXmlException(loc() + " transition node should have attributes " + attFrom + ", " + attAction + ", and " + attTo, TransitionSystemPart.TRANSITIONS));
 					} else {
 						try {
-							ts.addTransition(new Transition<>(from, action, to));
+							ts.addTransition(new TSTransition<>(from, action, to));
 						} catch (FVMException fe) {
 							errors.add(fe);
 						}

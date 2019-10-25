@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.PGTransition;
-import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.Transition;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 
 /**
  * Some methods to support literal collections.
@@ -22,8 +22,8 @@ public class CollectionHelper {
         return new PGTransition<>(from, cond,action, to);
     }
 
-    public static Transition<Object, Object> transition(Object from, Object action, Object to) {
-        return new Transition<>(from, action, to);
+    public static TSTransition<Object, Object> transition(Object from, Object action, Object to) {
+        return new TSTransition<>(from, action, to);
     }
 
     /*
