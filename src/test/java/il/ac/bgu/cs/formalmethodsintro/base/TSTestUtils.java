@@ -23,7 +23,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
  *
  * PDF drawings of some of the systems can be found in the "docs" folder at the
  * top repository level.
- * 
+ *
  * @author michael
  */
 public class TSTestUtils {
@@ -145,8 +145,8 @@ public class TSTestUtils {
         IntStream.rangeClosed(1, stateNum - 1).forEach(i -> retVal.addAction("a" + i));
         IntStream.rangeClosed(1, stateNum - 1)
                 .forEach(i -> retVal.addTransitionFrom(stateFactory.apply(i))
-                        .action("a" + i)
-                        .to(stateFactory.apply(i + 1)));
+                .action("a" + i)
+                .to(stateFactory.apply(i + 1)));
 
         retVal.addInitialState(stateFactory.apply(1));
 
@@ -167,7 +167,7 @@ public class TSTestUtils {
      */
     public static TransitionSystem<Integer, String, String> makeCircularTs(int stateNum) {
         TransitionSystem<Integer, String, String> retVal = makeLinearTs(stateNum);
-        retVal.setName( "Circular of " + stateNum );
+        retVal.setName("Circular of " + stateNum);
         retVal.addAction("a" + stateNum);
         retVal.addTransitionFrom(stateNum).action("a" + stateNum).to(1);
 
@@ -207,21 +207,21 @@ public class TSTestUtils {
      */
     public static TransitionSystem<String, String, String> makeBranchingTs(int pathLength, int branchCount) {
         TransitionSystem<String, String, String> retVal = makeLinearTs(pathLength, i -> "s" + i);
-        
+
         retVal.setName(String.format("branching %d/%d", pathLength, branchCount));
-        
+
         int branchPoint = pathLength - 3;
-        
+
         retVal.addAction("fork");
-        
+
         IntStream.rangeClosed(1, branchCount).forEach(branchNum -> {
             final String statePrefix = "s_" + branchNum + "_";
-            
+
             IntStream.rangeClosed(branchPoint + 1, pathLength).forEach(i -> retVal.addState(statePrefix + i));
-            
+
             IntStream.rangeClosed(branchPoint + 1, pathLength - 1)
                     .forEach(i -> retVal.addTransitionFrom(statePrefix + i).action("a" + i).to(statePrefix + (i + 1)));
-            
+
             retVal.addTransitionFrom("s" + branchPoint).action("fork").to(statePrefix + (branchPoint + 1));
         });
 

@@ -4,41 +4,35 @@
 // Any modifications to this file will be lost upon recompilation of the source schema. 
 // Generated on: 2015.11.04 at 05:09:29 PM IST 
 //
-
-
 package il.ac.bgu.cs.formalmethodsintro.base.goal;
 
 import javax.xml.bind.annotation.XmlRegistry;
 
-
 /**
- * This object contains factory methods for each 
- * Java content interface and Java element interface 
- * generated in the generated package. 
- * <p>An ObjectFactory allows you to programatically 
- * construct new instances of the Java representation 
- * for XML content. The Java representation of XML 
- * content can consist of schema derived interfaces 
- * and classes representing the binding of schema 
- * type definitions, element declarations and model 
- * groups.  Factory methods for each of these are 
- * provided in this class.
- * 
+ * This object contains factory methods for each Java content interface and Java
+ * element interface generated in the generated package.
+ * <p>
+ * An ObjectFactory allows you to programatically construct new instances of the
+ * Java representation for XML content. The Java representation of XML content
+ * can consist of schema derived interfaces and classes representing the binding
+ * of schema type definitions, element declarations and model groups. Factory
+ * methods for each of these are provided in this class.
+ *
  */
 @XmlRegistry
 public class ObjectFactory {
 
-
     /**
-     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: generated
-     * 
+     * Create a new ObjectFactory that can be used to create new instances of
+     * schema derived classes for package: generated
+     *
      */
     public ObjectFactory() {
     }
 
     /**
      * Create an instance of {@link GoalStructure }
-     * 
+     *
      */
     public GoalStructure createAutomaton() {
         return new GoalStructure();
@@ -46,7 +40,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.TransitionSet }
-     * 
+     *
      */
     public GoalStructure.TransitionSet createAutomatonTransitionSet() {
         return new GoalStructure.TransitionSet();
@@ -54,7 +48,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.StateSet }
-     * 
+     *
      */
     public GoalStructure.StateSet createAutomatonStateSet() {
         return new GoalStructure.StateSet();
@@ -62,7 +56,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.Alphabet }
-     * 
+     *
      */
     public GoalStructure.Alphabet createAutomatonAlphabet() {
         return new GoalStructure.Alphabet();
@@ -70,7 +64,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.InitialStateSet }
-     * 
+     *
      */
     public GoalStructure.InitialStateSet createAutomatonInitialStateSet() {
         return new GoalStructure.InitialStateSet();
@@ -78,7 +72,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.Acc }
-     * 
+     *
      */
     public GoalStructure.Acc createAutomatonAcc() {
         return new GoalStructure.Acc();
@@ -86,7 +80,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.TransitionSet.Transition }
-     * 
+     *
      */
     public GoalStructure.TransitionSet.Transition createAutomatonTransitionSetTransition() {
         return new GoalStructure.TransitionSet.Transition();
@@ -94,7 +88,7 @@ public class ObjectFactory {
 
     /**
      * Create an instance of {@link GoalStructure.StateSet.State }
-     * 
+     *
      */
     public GoalStructure.StateSet.State createAutomatonStateSetState() {
         return new GoalStructure.StateSet.State();

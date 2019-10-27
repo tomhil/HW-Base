@@ -6,8 +6,8 @@ package il.ac.bgu.cs.formalmethodsintro.base.exceptions;
  */
 public class FVMException extends RuntimeException {
 
-	public FVMException(String string) {
-		super(string);
-	}
+    public FVMException(String string) {
+        super(string);
+    }
 
 }

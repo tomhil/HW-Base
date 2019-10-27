@@ -26,196 +26,197 @@ import il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.TransitionSet.Tra
 
 public class AutomatonIO {
 
-	public static <State, L> void write(Automaton<State, L> aut, String file) throws Exception {
-		GoalStructure gs = new GoalStructure();
+    public static <State, L> void write(Automaton<State, L> aut, String file) throws Exception {
+        GoalStructure gs = new GoalStructure();
 
-		gs.setLabelOn("Transition");
-		gs.setType("FiniteStateAutomaton");
+        gs.setLabelOn("Transition");
+        gs.setType("FiniteStateAutomaton");
 
-		gs.setAlphabet(new Alphabet());
-		gs.alphabet.setType("Propositional");
+        gs.setAlphabet(new Alphabet());
+        gs.alphabet.setType("Propositional");
 
-		gs.setStateSet(new StateSet());
+        gs.setStateSet(new StateSet());
 
-		gs.acc = new Acc();
-		gs.acc.setType("Buchi");
+        gs.acc = new Acc();
+        gs.acc.setType("Buchi");
 
-		gs.initialStateSet = new InitialStateSet();
+        gs.initialStateSet = new InitialStateSet();
 
-		gs.transitionSet = new TransitionSet();
-		gs.transitionSet.setComplete("false");
+        gs.transitionSet = new TransitionSet();
+        gs.transitionSet.setComplete("false");
 
-		gs.stateSet.state = new NoDuplicatesList<>();
-		gs.alphabet.proposition = new NoDuplicatesList<>();
-		gs.acc.stateID = new NoDuplicatesList<>();
-		gs.transitionSet.transition = new NoDuplicatesList<>();
+        gs.stateSet.state = new NoDuplicatesList<>();
+        gs.alphabet.proposition = new NoDuplicatesList<>();
+        gs.acc.stateID = new NoDuplicatesList<>();
+        gs.transitionSet.transition = new NoDuplicatesList<>();
 
-		
-		Set<L> symbols = new HashSet<>(); 
-		
-		for (Entry<State, Map<Set<L>, Set<State>>> ent : aut.getTransitions().entrySet()) {
+        Set<L> symbols = new HashSet<>();
 
-			for (Entry<Set<L>, Set<State>> tr : ent.getValue().entrySet()) {
-				Set<L> symbol = tr.getKey();
+        for (Entry<State, Map<Set<L>, Set<State>>> ent : aut.getTransitions().entrySet()) {
 
-				for (L s : symbol) {
-					gs.alphabet.proposition.add(s.toString());
-					symbols.add(s);
-				}
-			}
-		}
+            for (Entry<Set<L>, Set<State>> tr : ent.getValue().entrySet()) {
+                Set<L> symbol = tr.getKey();
 
-		long tid = 1;
-		for (Entry<State, Map<Set<L>, Set<State>>> ent : aut.getTransitions().entrySet()) {
-			State source = ent.getKey();
+                for (L s : symbol) {
+                    gs.alphabet.proposition.add(s.toString());
+                    symbols.add(s);
+                }
+            }
+        }
+
+        long tid = 1;
+        for (Entry<State, Map<Set<L>, Set<State>>> ent : aut.getTransitions().entrySet()) {
+            State source = ent.getKey();
 
             il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
-			stt.setSid(IdAssignner.getId(source));
-			stt.setLabel(source.toString());
+            stt.setSid(IdAssignner.getId(source));
+            stt.setLabel(source.toString());
 
-			gs.stateSet.state.add(stt);
+            gs.stateSet.state.add(stt);
 
-			for (Entry<Set<L>, Set<State>> tr : ent.getValue().entrySet()) {
+            for (Entry<Set<L>, Set<State>> tr : ent.getValue().entrySet()) {
 
-				Set<L> symbol = tr.getKey();
+                Set<L> symbol = tr.getKey();
 
-				String label = "";
-				for (L s : symbol) {
-					label += s + " ";
-				}
+                String label = "";
+                for (L s : symbol) {
+                    label += s + " ";
+                }
 
-				for (L s : symbols) {
-					if (!symbol.contains(s)) {
-						label += "~" + s + " ";
-					}
-				}
+                for (L s : symbols) {
+                    if (!symbol.contains(s)) {
+                        label += "~" + s + " ";
+                    }
+                }
 
-				for (State destination : tr.getValue()) {
-					stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
-					stt.setSid(IdAssignner.getId(destination));
-					stt.setLabel(destination.toString());
+                for (State destination : tr.getValue()) {
+                    stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
+                    stt.setSid(IdAssignner.getId(destination));
+                    stt.setLabel(destination.toString());
 
-					gs.stateSet.state.add(stt);
+                    gs.stateSet.state.add(stt);
 
-					// Transition
-					Transition tran = new Transition();
-					tran.setFrom(IdAssignner.getId(source));
-					tran.setTo(IdAssignner.getId(destination));
-					tran.label = label;
-					tran.tid = tid++;
-					gs.transitionSet.transition.add(tran);
+                    // Transition
+                    Transition tran = new Transition();
+                    tran.setFrom(IdAssignner.getId(source));
+                    tran.setTo(IdAssignner.getId(destination));
+                    tran.label = label;
+                    tran.tid = tid++;
+                    gs.transitionSet.transition.add(tran);
 
-					// If this is an initial state, copy the transition
-					if (aut.getInitialStates().contains(source)) {
-						Transition tran1 = new Transition();
-						tran1.setFrom(0L);
-						tran1.setTo(IdAssignner.getId(destination));
-						tran1.label = label;
-						tran1.tid = tid++;
-						gs.transitionSet.transition.add(tran1);
-					}
+                    // If this is an initial state, copy the transition
+                    if (aut.getInitialStates().contains(source)) {
+                        Transition tran1 = new Transition();
+                        tran1.setFrom(0L);
+                        tran1.setTo(IdAssignner.getId(destination));
+                        tran1.label = label;
+                        tran1.tid = tid++;
+                        gs.transitionSet.transition.add(tran1);
+                    }
 
-				}
-			}
-		}
+                }
+            }
+        }
 
-		for (State s : aut.getAcceptingStates()) {
-			gs.acc.stateID.add(IdAssignner.getId(s));
-		}
+        for (State s : aut.getAcceptingStates()) {
+            gs.acc.stateID.add(IdAssignner.getId(s));
+        }
 
-		// Add a single initial state
-		il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
-		stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
-		stt.setSid(0L);
-		stt.setLabel("initial");
-		gs.stateSet.state.add(stt);
-		gs.initialStateSet.stateID = 0L;
+        // Add a single initial state
+        il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
+        stt = new il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure.StateSet.State();
+        stt.setSid(0L);
+        stt.setLabel("initial");
+        gs.stateSet.state.add(stt);
+        gs.initialStateSet.stateID = 0L;
 
-		JAXBContext jc = JAXBContext.newInstance("il.ac.bgu.cs.formalmethodsintro.base.goal");
-		Marshaller marshaller = jc.createMarshaller();
-		marshaller.marshal(gs, new File(file));
-	}
+        JAXBContext jc = JAXBContext.newInstance("il.ac.bgu.cs.formalmethodsintro.base.goal");
+        Marshaller marshaller = jc.createMarshaller();
+        marshaller.marshal(gs, new File(file));
+    }
 
-	public static MultiColorAutomaton<String, String> read(String file) throws Exception {
+    public static MultiColorAutomaton<String, String> read(String file) throws Exception {
 
-		JAXBContext jc = JAXBContext.newInstance("il.ac.bgu.cs.formalmethodsintro.base.goal");
-		Unmarshaller unmarshaller = jc.createUnmarshaller();
-		GoalStructure gs = (GoalStructure) unmarshaller.unmarshal(new File(file));
+        JAXBContext jc = JAXBContext.newInstance("il.ac.bgu.cs.formalmethodsintro.base.goal");
+        Unmarshaller unmarshaller = jc.createUnmarshaller();
+        GoalStructure gs = (GoalStructure) unmarshaller.unmarshal(new File(file));
 
-		MultiColorAutomaton<String, String> aut = new MultiColorAutomaton<>();
+        MultiColorAutomaton<String, String> aut = new MultiColorAutomaton<>();
 
-		for (Transition t : gs.getTransitionSet().getTransition()) {
-			Set<String> symbol = new HashSet<>(Arrays.asList(t.label.split(" ")));
+        for (Transition t : gs.getTransitionSet().getTransition()) {
+            Set<String> symbol = new HashSet<>(Arrays.asList(t.label.split(" ")));
 
-			symbol = symbol.stream().filter(s -> !s.startsWith("~")).collect(Collectors.toSet());
+            symbol = symbol.stream().filter(s -> !s.startsWith("~")).collect(Collectors.toSet());
 
-			String source = "" + t.getFrom();
-			String destination = "" + t.getTo();
-			aut.addTransition(source, symbol, destination);
+            String source = "" + t.getFrom();
+            String destination = "" + t.getTo();
+            aut.addTransition(source, symbol, destination);
 
-			if (gs.initialStateSet.getStateID() == t.getFrom()) {
-				aut.setInitial(source);
-			}
+            if (gs.initialStateSet.getStateID() == t.getFrom()) {
+                aut.setInitial(source);
+            }
 
-			if (gs.acc.stateID != null && gs.acc.stateID.contains(t.getFrom())) {
-				aut.setAccepting(source, 0);
-			}
+            if (gs.acc.stateID != null && gs.acc.stateID.contains(t.getFrom())) {
+                aut.setAccepting(source, 0);
+            }
 
-			if (gs.initialStateSet.getStateID() == t.getTo()) {
-				aut.setInitial(destination);
-			}
+            if (gs.initialStateSet.getStateID() == t.getTo()) {
+                aut.setInitial(destination);
+            }
 
-			if (gs.acc.stateID != null && gs.acc.stateID.contains(t.getTo())) {
-				aut.setAccepting(destination, 0);
-			}
-		}
+            if (gs.acc.stateID != null && gs.acc.stateID.contains(t.getTo())) {
+                aut.setAccepting(destination, 0);
+            }
+        }
 
-		return aut;
-	}
+        return aut;
+    }
 
 }
 
 @SuppressWarnings("serial")
 class NoDuplicatesList<E> extends LinkedList<E> {
-	@Override
-	public boolean add(E e) {
-		if (this.contains(e)) {
-			return false;
-		} else {
-			return super.add(e);
-		}
-	}
 
-	@Override
-	public boolean addAll(Collection<? extends E> collection) {
-		Collection<E> copy = new LinkedList<>(collection);
-		copy.removeAll(this);
-		return super.addAll(copy);
-	}
+    @Override
+    public boolean add(E e) {
+        if (this.contains(e)) {
+            return false;
+        } else {
+            return super.add(e);
+        }
+    }
 
-	@Override
-	public boolean addAll(int index, Collection<? extends E> collection) {
-		Collection<E> copy = new LinkedList<>(collection);
-		copy.removeAll(this);
-		return super.addAll(index, copy);
-	}
+    @Override
+    public boolean addAll(Collection<? extends E> collection) {
+        Collection<E> copy = new LinkedList<>(collection);
+        copy.removeAll(this);
+        return super.addAll(copy);
+    }
 
-	@Override
-	public void add(int index, E element) {
-		if (! this.contains(element)) {
-			super.add(index, element);
-		}
-	}
+    @Override
+    public boolean addAll(int index, Collection<? extends E> collection) {
+        Collection<E> copy = new LinkedList<>(collection);
+        copy.removeAll(this);
+        return super.addAll(index, copy);
+    }
+
+    @Override
+    public void add(int index, E element) {
+        if (!this.contains(element)) {
+            super.add(index, element);
+        }
+    }
 }
 
 class IdAssignner {
-	private static long lastId = 1;
-	private static final Map<Object, Long> ID_MAP = new HashMap<>();
 
-	static long getId(Object o) {
-		if (!ID_MAP.containsKey(o)) {
-			ID_MAP.put(o, lastId++);
-		}
-		return ID_MAP.get(o);
-	}
+    private static long lastId = 1;
+    private static final Map<Object, Long> ID_MAP = new HashMap<>();
+
+    static long getId(Object o) {
+        if (!ID_MAP.containsKey(o)) {
+            ID_MAP.put(o, lastId++);
+        }
+        return ID_MAP.get(o);
+    }
 }

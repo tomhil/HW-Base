@@ -26,24 +26,21 @@ import il.ac.bgu.cs.formalmethodsintro.base.goal.AutomatonIO;
 
 /**
  * An non-deterministic automaton, composed of states and transitions.
- * 
- * @param <State>
- *            Type of states.
- * @param <Sigma>
- *            Type of transitions/alphabet the automaton understands.
+ *
+ * @param <State> Type of states.
+ * @param <Sigma> Type of transitions/alphabet the automaton understands.
  */
-
 public class Automaton<State, Sigma> extends MultiColorAutomaton<State, Sigma> {
 
-	public void setAccepting(State s) {
-		super.setAccepting(s, 0);
-	}
+    public void setAccepting(State s) {
+        super.setAccepting(s, 0);
+    }
 
-	public Set<State> getAcceptingStates() {
-		return super.getAcceptingStates(0);
-	}
-    
-	public boolean isEquivalentTo(Automaton<?,Sigma> other) {
+    public Set<State> getAcceptingStates() {
+        return super.getAcceptingStates(0);
+    }
+
+    public boolean isEquivalentTo(Automaton<?, Sigma> other) {
         try {
             AutomatonIO.write((Automaton<?, Sigma>) other, "other.gff");
             AutomatonIO.write(this, "this.gff");
@@ -78,16 +75,16 @@ public class Automaton<State, Sigma> extends MultiColorAutomaton<State, Sigma> {
             return false;
         }
     }
-    
-    public boolean isEquivalentTo( String serializedAutomaton ) {
+
+    public boolean isEquivalentTo(String serializedAutomaton) {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n"
                 + "<logic name=\"QPTL\">\r\n" + "    <name/>\r\n" + "    <description/>\r\n" + "    <formula>"
                 + serializedAutomaton + "</formula>\r\n" + "</logic>\r\n" + "";
-        
-        try ( BufferedWriter writer = new BufferedWriter(new FileWriter("formula.gff"))) {
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("formula.gff"))) {
 
             writer.write(xml);
-            writer.close();				
+            writer.close();
 
             AutomatonIO.write(this, "this.gff");
 
@@ -96,8 +93,8 @@ public class Automaton<State, Sigma> extends MultiColorAutomaton<State, Sigma> {
             Constant con1 = new Constant("this.gff");
             Constant con3 = new Constant("formula.gff");
 
-            Lval lval1 = new Lval("th", new Expression[] {});
-            Lval lval3 = new Lval("fo", new Expression[] {});
+            Lval lval1 = new Lval("th", new Expression[]{});
+            Lval lval3 = new Lval("fo", new Expression[]{});
 
             CodecRepository.add(0, new GFFCodec());
 
@@ -122,8 +119,7 @@ public class Automaton<State, Sigma> extends MultiColorAutomaton<State, Sigma> {
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return false;
-        } 
+        }
     }
-
 
 }

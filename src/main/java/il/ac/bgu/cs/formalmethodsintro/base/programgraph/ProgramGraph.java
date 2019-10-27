@@ -15,8 +15,8 @@ import java.util.Set;
 public class ProgramGraph<L, A> {
 
     /**
-    * The set of initial locations of the program graph.
-    */
+     * The set of initial locations of the program graph.
+     */
     private final Set<L> initLocations = new HashSet<>();
 
     /**
@@ -38,7 +38,7 @@ public class ProgramGraph<L, A> {
      * The name of the program graph.
      */
     private String name;
-    
+
     /**
      * Add an option for the initial value of the variables. The format of the
      * initialization is a list of actions. For example the initialization
@@ -65,12 +65,14 @@ public class ProgramGraph<L, A> {
      * Add an initial state.
      *
      * @param location An location already in the graph
-     * @param isInitial whether {@code location} should be an initial location in {@code this}.
-     * @throws IllegalArgumentException, if {@code location} is not a location in {@code this}.
+     * @param isInitial whether {@code location} should be an initial location
+     * in {@code this}.
+     * @throws IllegalArgumentException, if {@code location} is not a location
+     * in {@code this}.
      */
     public void setInitial(L location, boolean isInitial) {
-        if ( isInitial ) {
-            addLocation( location );
+        if (isInitial) {
+            addLocation(location);
             initLocations.add(location);
         } else {
             initLocations.remove(location);
@@ -82,7 +84,7 @@ public class ProgramGraph<L, A> {
      *
      * @param l The name of the new location.
      */
-    public void addLocation(L l){
+    public void addLocation(L l) {
         locations.add(l);
     }
 
@@ -91,12 +93,11 @@ public class ProgramGraph<L, A> {
      *
      * @param t A transition to add.
      */
-    public void addTransition(PGTransition<L,A> t) {
+    public void addTransition(PGTransition<L, A> t) {
         addLocation(t.getFrom());
         addLocation(t.getTo());
         transitions.add(t);
     }
-
 
     /**
      * @return The set of initial locations.
@@ -133,7 +134,7 @@ public class ProgramGraph<L, A> {
      *
      * @param t A transition to remove.
      */
-    public void removeTransition(PGTransition<L,A> t){
+    public void removeTransition(PGTransition<L, A> t) {
         transitions.remove(t);
     }
 
@@ -170,7 +171,7 @@ public class ProgramGraph<L, A> {
         if (obj == null) {
             return false;
         }
-        if ( !(obj instanceof ProgramGraph) ) {
+        if (!(obj instanceof ProgramGraph)) {
             return false;
         }
         final ProgramGraph<?, ?> other = (ProgramGraph<?, ?>) obj;
@@ -188,11 +189,11 @@ public class ProgramGraph<L, A> {
         }
         return Objects.equals(this.initializations, other.initializations);
     }
-    
+
     @Override
     public String toString() {
-        return String.format("[ProgamGraph name:%s locations:%d transitions:%d]", 
-            getName(), getLocations().size(), getTransitions().size());
+        return String.format("[ProgamGraph name:%s locations:%d transitions:%d]",
+                getName(), getLocations().size(), getTransitions().size());
     }
-    
+
 }

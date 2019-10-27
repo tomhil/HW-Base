@@ -8,82 +8,86 @@ import java.util.Set;
 
 public class MultiColorAutomaton<State, L> {
 
-	private final Set<State> initial;
-	private final Map<Integer, Set<State>> accepting;
-	private final Map<State, Map<Set<L>, Set<State>>> transitions;
+    private final Set<State> initial;
+    private final Map<Integer, Set<State>> accepting;
+    private final Map<State, Map<Set<L>, Set<State>>> transitions;
 
-	public MultiColorAutomaton() {
-		transitions = new HashMap<>();
-		initial = new HashSet<>();
-		accepting = new HashMap<>();
-	}
+    public MultiColorAutomaton() {
+        transitions = new HashMap<>();
+        initial = new HashSet<>();
+        accepting = new HashMap<>();
+    }
 
-	public void addState(State s) {
-		if (!transitions.containsKey(s))
-			transitions.put(s, new HashMap<>());
-	}
+    public void addState(State s) {
+        if (!transitions.containsKey(s)) {
+            transitions.put(s, new HashMap<>());
+        }
+    }
 
-	public void addTransition(State source, Set<L> symbol, State destination) {
-		if (!transitions.containsKey(source))
-			addState(source);
+    public void addTransition(State source, Set<L> symbol, State destination) {
+        if (!transitions.containsKey(source)) {
+            addState(source);
+        }
 
-		if (!transitions.containsKey(destination))
-			addState(destination);
+        if (!transitions.containsKey(destination)) {
+            addState(destination);
+        }
 
-		Set<State> set = transitions.get(source).get(symbol);
-		if (set == null) {
-			set = new HashSet<>();
-			transitions.get(source).put(symbol, set);
-		}
-		set.add(destination);
-	}
+        Set<State> set = transitions.get(source).get(symbol);
+        if (set == null) {
+            set = new HashSet<>();
+            transitions.get(source).put(symbol, set);
+        }
+        set.add(destination);
+    }
 
-	public Set<State> getAcceptingStates(int color) {
-		Set<State> acc = accepting.get(color);
+    public Set<State> getAcceptingStates(int color) {
+        Set<State> acc = accepting.get(color);
 
-		if (acc == null) {
-			acc = new HashSet<>();
-			accepting.put(color, acc);
-		}
+        if (acc == null) {
+            acc = new HashSet<>();
+            accepting.put(color, acc);
+        }
 
-		return acc;
-	}
+        return acc;
+    }
 
-	public Set<State> getInitialStates() {
-		return initial;
-	}
+    public Set<State> getInitialStates() {
+        return initial;
+    }
 
-	public Map<State, Map<Set<L>, Set<State>>> getTransitions() {
-		return transitions;
-	}
+    public Map<State, Map<Set<L>, Set<State>>> getTransitions() {
+        return transitions;
+    }
 
-	public Set<State> nextStates(State source, Set<L> symbol) {
-		if (!transitions.containsKey(source))
-			throw new IllegalArgumentException();
-		else
-			return transitions.get(source).get(symbol);
-	}
+    public Set<State> nextStates(State source, Set<L> symbol) {
+        if (!transitions.containsKey(source)) {
+            throw new IllegalArgumentException();
+        } else {
+            return transitions.get(source).get(symbol);
+        }
+    }
 
-	public void setAccepting(State s, int color) {
-		Set<State> acc = accepting.get(color);
+    public void setAccepting(State s, int color) {
+        Set<State> acc = accepting.get(color);
 
-		if (acc == null) {
-			acc = new HashSet<>();
-			accepting.put(color, acc);
-		}
+        if (acc == null) {
+            acc = new HashSet<>();
+            accepting.put(color, acc);
+        }
 
-		addState(s);
-		acc.add(s);
-	}
+        addState(s);
+        acc.add(s);
+    }
 
-	public void setInitial(State s) {
-		addState(s);
-		initial.add(s);
-	}
+    public void setInitial(State s) {
+        addState(s);
+        initial.add(s);
+    }
 
-	public Set<Integer> getColors() {
-		return accepting.keySet();
-	}
+    public Set<Integer> getColors() {
+        return accepting.keySet();
+    }
 
     @Override
     public int hashCode() {
@@ -113,7 +117,5 @@ public class MultiColorAutomaton<State, L> {
         }
         return Objects.equals(this.transitions, other.transitions);
     }
-    
-    
 
 }

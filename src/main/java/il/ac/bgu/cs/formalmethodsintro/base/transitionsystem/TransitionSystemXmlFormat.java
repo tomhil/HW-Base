@@ -11,14 +11,14 @@ import org.xml.sax.SAXException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.InvalidTSDescriptionException;
 
 /**
- * 
+ *
  * Stores and loads {@link TransitionSystem} objects from XML.
- * 
+ *
  */
 public interface TransitionSystemXmlFormat {
 
-	TransitionSystem<String,String,String> read(Reader reader) throws Exception;
+    TransitionSystem<String, String, String> read(Reader reader) throws Exception;
 
-	void write(TransitionSystem<String,String,String> ts, Writer output) throws InvalidTSDescriptionException, SAXException, IOException, XMLStreamException;
+    void write(TransitionSystem<String, String, String> ts, Writer output) throws InvalidTSDescriptionException, SAXException, IOException, XMLStreamException;
 
 }

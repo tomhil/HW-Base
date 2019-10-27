@@ -12,11 +12,11 @@ import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.Joined
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ThrowingErrorListener;
 
 /**
- * A class for identifying and interpreting combined actions such as 
+ * A class for identifying and interpreting combined actions such as
  * {@code _C!0 | _C?x}. As in this example, joined actions involve reading and
  * writing to channels with zero capacity separated by the '|' character.
- * Channels with zero capacity are marked by an underscore in front of 
- * the channel name.
+ * Channels with zero capacity are marked by an underscore in front of the
+ * channel name.
  */
 public class ParserBasedInterleavingActDef implements InterleavingActDef {
 
@@ -41,7 +41,7 @@ public class ParserBasedInterleavingActDef implements InterleavingActDef {
      *
      * @return The root of the parse tree or null if cannot parse.
      */
-	private JoinedContext parseAction(String action) {
+    private JoinedContext parseAction(String action) {
         NanoPromelaLexer lexer = new NanoPromelaLexer(new ANTLRInputStream(action));
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -72,7 +72,7 @@ public class ParserBasedInterleavingActDef implements InterleavingActDef {
         return action.equals("") || parseAction((String) action) != null;
     }
 
-	@Override
+    @Override
     public boolean isOneSidedAction(String action) {
         NanoPromelaLexer lexer = new NanoPromelaLexer(new ANTLRInputStream(action));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
