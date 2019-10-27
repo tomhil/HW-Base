@@ -18,7 +18,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ThrowingErrorListener;
  * Channels with zero capacity are marked by an underscore in front of 
  * the channel name.
  */
-@SuppressWarnings("deprecation")
 public class ParserBasedInterleavingActDef implements InterleavingActDef {
 
     @Override

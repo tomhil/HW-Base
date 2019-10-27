@@ -16,7 +16,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser.StmtCo
  * An object that identifies and interprets the actions defined in the grammar
  * nanopromela/NanoPromela.g4
  */
-@SuppressWarnings("deprecation")
 public class ParserBasedActDef implements ActionDef {
 
 	/** 
@@ -47,7 +46,7 @@ public class ParserBasedActDef implements ActionDef {
 		lexer.removeErrorListeners();
 		lexer.addErrorListener(new ThrowingErrorListener());
 
-		parser.removeErrorListeners();
+		parser.removeErrorListeners(); 
 		parser.addErrorListener(new ThrowingErrorListener());
 
 		try {
