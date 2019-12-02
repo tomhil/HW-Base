@@ -59,7 +59,7 @@ You are *not* allowed to:
 Your code will be checked and graded using an automated system. Compile errors are heavily penalized. You are 3+ years into your software engineering degree, compilation should not be an issue at this point.
 
 == Submission Guidelines
-* Submit the zip file through the [ISE Submission System](https://subsys.ise.bgu.ac.il).
+* Submit the zip file through the ISE Submission System.
 * Consecutive submissions will result in a penalty, reducing the final grade by 1.
 
 == FAQ
