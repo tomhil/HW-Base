@@ -60,7 +60,7 @@ Your code will be checked and graded using an automated system. Compile errors a
 
 == Submission Guidelines
 * Submit the zip file through the https://subsys.ise.bgu.ac.il/submission/login.aspx[ISE Submission System].
-* Consecutive submissions will result in a penalty, reducing the final grade by 1.
+* Each submission will reduce the final grade of your next submission by 1 point.
 
 == FAQ
 
