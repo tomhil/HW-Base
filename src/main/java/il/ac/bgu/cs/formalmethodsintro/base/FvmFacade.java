@@ -13,11 +13,15 @@ import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.ltl.LTL;
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ActionDef;
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ConditionDef;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ParserBasedActDef;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ParserBasedCondDef;
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ProgramGraph;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.util.Pair;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Interface for the entry point class to the HW in this class. Our
@@ -347,6 +351,11 @@ public class FvmFacade {
         throw new java.lang.UnsupportedOperationException();
     }
 
+    
+    
+    
+    
+    
     /**
      * Creates a transition system representing channel system {@code cs}.
      *
@@ -356,10 +365,19 @@ public class FvmFacade {
      * @return A transition system representing {@code cs}.
      */
     public <L, A> TransitionSystem<Pair<List<L>, Map<String, Object>>, A, String> transitionSystemFromChannelSystem(
-            ChannelSystem<L, A> cs) {
+           ChannelSystem<L, A> cs ) {
+
+        Set<ActionDef> actions = Collections.singleton(new ParserBasedActDef());
+        Set<ConditionDef> conditions = Collections.singleton(new ParserBasedCondDef());
+        return transitionSystemFromChannelSystem(cs, actions, conditions);
+    }
+   
+    public <L, A> TransitionSystem<Pair<List<L>, Map<String, Object>>, A, String> transitionSystemFromChannelSystem(
+            ChannelSystem<L, A> cs, Set<ActionDef> actions, Set<ConditionDef> conditions) {    
         throw new java.lang.UnsupportedOperationException();
     }
-
+    
+    
     /**
      * Construct a program graph from nanopromela code.
      *
