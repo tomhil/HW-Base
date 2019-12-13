@@ -53,7 +53,17 @@ public class FvmFacade {
      * @return {@code true} iff the action is deterministic.
      */
     public <S, A, P> boolean isActionDeterministic(TransitionSystem<S, A, P> ts) {
-        throw new java.lang.UnsupportedOperationException();
+        if(ts.getInitialStates().size()>1)
+            return false;
+        Set<S> states= ts.getStates();
+        Set<A> actions=ts.getActions();
+        for (S state: states) {
+            for (A action:actions) {
+                if((post(ts,state,action)).size()>1)
+                    return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -67,7 +77,19 @@ public class FvmFacade {
      * @return {@code true} iff the action is ap-deterministic.
      */
     public <S, A, P> boolean isAPDeterministic(TransitionSystem<S, A, P> ts) {
-        throw new java.lang.UnsupportedOperationException();
+        if(ts.getInitialStates().size()>1)
+            return false;
+        Set<S> states= ts.getStates();
+        for (S state: states) {
+            Set<Set<P>> labales=new HashSet<>();
+            Set<S> posts=post(ts,state);
+            for (S post:posts) {
+                if(labales.contains(ts.getLabel(post)))
+                    return false;
+                labales.add(ts.getLabel(post));
+            }
+        }
+        return true;
     }
 
     /**

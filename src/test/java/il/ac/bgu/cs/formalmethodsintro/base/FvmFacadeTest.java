@@ -19,11 +19,39 @@ public class FvmFacadeTest {
 
     FvmFacade fvmFacade;
     TransitionSystem simple;
+    TransitionSystem notDeterministic;
+
+
 
     @Before
     public void setUp() throws Exception {
         fvmFacade=new FvmFacade();
         simple=buildSimpleTS();
+        notDeterministic=buildnotDeterministicTS();
+
+    }
+
+    private TransitionSystem buildnotDeterministicTS() {
+        TransitionSystem ts=new TransitionSystem();
+        ts.addInitialState(1);
+        ts.addAllStates(new Integer[]{2,3,4,5});
+        ts.addAllActions(new Character[]{'a','b','c'});
+
+
+        ts.addTransition(new TSTransition(1,'a',2));
+        ts.addTransition(new TSTransition(1,'a',3));
+        ts.addTransition(new TSTransition(3,'c',4));
+        ts.addTransition(new TSTransition(2,'b',2));
+
+        ts.addAllAtomicPropositions(new String[]{"x","y","z"});
+
+
+        ts.addToLabel(1,"x");
+        ts.addToLabel(2,"y");
+        ts.addToLabel(3,"y");
+        ts.addToLabel(4,"z");
+
+        return ts;
     }
 
     private TransitionSystem buildSimpleTS() {
@@ -52,17 +80,22 @@ public class FvmFacadeTest {
     public void tearDown() throws Exception {
     }
 
-
-    @Test
-    public void get() {
-    }
-
     @Test
     public void isActionDeterministic() {
+        Assert.assertEquals(true,fvmFacade.isActionDeterministic(simple));
+        Assert.assertEquals(true,fvmFacade.isActionDeterministic(new TransitionSystem<>()));
+        simple.addInitialState(7);
+        Assert.assertEquals(false,fvmFacade.isActionDeterministic(simple));
+        Assert.assertEquals(false,fvmFacade.isActionDeterministic(notDeterministic));
     }
 
     @Test
     public void isAPDeterministic() {
+        Assert.assertEquals(true,fvmFacade.isAPDeterministic(simple));
+        Assert.assertEquals(true,fvmFacade.isAPDeterministic(new TransitionSystem<>()));
+        simple.addInitialState(7);
+        Assert.assertEquals(false,fvmFacade.isAPDeterministic(simple));
+        Assert.assertEquals(false,fvmFacade.isAPDeterministic(notDeterministic));
     }
 
     @Test
