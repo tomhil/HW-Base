@@ -301,6 +301,20 @@ public class FvmFacade {
         return output;
     }
 
+
+    public static <T> LinkedList<T> convertSetToList(Set<T> set)
+    {
+        // create an empty list
+        LinkedList<T> list = new LinkedList<T>();
+
+        // push each element in the set into the list
+        for (T t : set)
+            list.push(t);
+
+        // return the list
+        return list;
+    }
+
     /**
      * Implements the {@code reach(TS)} function.
      *
@@ -310,7 +324,19 @@ public class FvmFacade {
      * @return All states reachable in {@code ts}.
      */
     public <S, A> Set<S> reach(TransitionSystem<S, A, ?> ts) {
-        throw new java.lang.UnsupportedOperationException();
+        LinkedList<S> states=new LinkedList<>(ts.getInitialStates());
+        Set<S> output=new HashSet<S>();
+        while(!states.isEmpty()){
+            S s= states.remove();
+            output.add(s);
+            Set<S> posts=post(ts,s);
+            //Prevention of Circuits
+            for (S post:posts) {
+                if(!output.contains(post))
+                    states.add(post);
+            }
+        }
+        return output;
     }
 
     /**

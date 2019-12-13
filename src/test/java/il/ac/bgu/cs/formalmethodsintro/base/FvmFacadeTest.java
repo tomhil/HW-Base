@@ -216,6 +216,11 @@ public class FvmFacadeTest {
 
     @Test
     public void reach() {
+        Set<Integer> expected = new HashSet<>(Arrays.asList(1, 2,3,4));
+        Assert.assertEquals("reach- Case without Circuits",expected,fvmFacade.reach(simple));
+        simple.addTransition(new TSTransition(2,'b',1)); //add circuit (1-> 2 ->1)
+        simple.addTransition(new TSTransition(3,'a',2)); //add circuit (1-> 3-> 2-> 1)
+        Assert.assertEquals("reach- Case without Circuits",expected,fvmFacade.reach(simple));
     }
 
     @Test
