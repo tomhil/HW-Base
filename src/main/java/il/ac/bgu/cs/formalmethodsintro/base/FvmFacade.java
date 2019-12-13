@@ -121,7 +121,15 @@ public class FvmFacade {
      * {@code ts}.
      */
     public <S, A, P> boolean isExecutionFragment(TransitionSystem<S, A, P> ts, AlternatingSequence<S, A> e) {
-        throw new java.lang.UnsupportedOperationException();
+        while(e.size()>1){
+            S from=e.head();
+            A action=e.tail().head();
+            e=e.tail().tail();
+            S to=e.head();
+            if(!ts.getTransitions().contains(new TSTransition<>(from,action,to)))
+                return false;
+        }
+        return true;
     }
 
     /**

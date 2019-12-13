@@ -1,6 +1,7 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
+import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import org.junit.After;
@@ -8,9 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -20,6 +19,7 @@ public class FvmFacadeTest {
     FvmFacade fvmFacade;
     TransitionSystem simple;
     TransitionSystem notDeterministic;
+    AlternatingSequence simpleSq;
 
 
 
@@ -28,7 +28,15 @@ public class FvmFacadeTest {
         fvmFacade=new FvmFacade();
         simple=buildSimpleTS();
         notDeterministic=buildnotDeterministicTS();
+        simpleSq=buildSimpleSq();
 
+    }
+
+    private AlternatingSequence buildSimpleSq() {
+        List<Integer> States= new ArrayList<Integer>(Arrays.asList(1, 3,4)) ;
+        List<Character> Actions= new ArrayList<Character>(Arrays.asList('b','c'));
+        AlternatingSequence output=new AlternatingSequence(States,Actions);
+        return output;
     }
 
     private TransitionSystem buildnotDeterministicTS() {
@@ -104,6 +112,12 @@ public class FvmFacadeTest {
 
     @Test
     public void isExecutionFragment() {
+        fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertTrue(fvmFacade.isExecutionFragment(simple,simpleSq));
+        simple.removeTransition(new TSTransition(3,'c',4));
+        fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertFalse(fvmFacade.isExecutionFragment(simple,simpleSq));
+
     }
 
     @Test
