@@ -59,9 +59,11 @@ You are *not* allowed to:
 Your code will be checked and graded using an automated system. Compile errors are heavily penalized. You are 3+ years into your software engineering degree, compilation should not be an issue at this point.
 
 == Submission Guidelines
-
-[WARNING]
-Need to complete this after talking with Guy Shani.
+* Submit a zip file with your project through the https://subsys.ise.bgu.ac.il/submission/login.aspx[ISE Submission System].
+* Zip file should contain your HW-Base folder and everything inside it.
+* In your HW-Base folder, create a filed named "students.txt". Each line should contain student ID.
+* Work may be done in pairs.
+* Each submission will reduce the final grade of your next submission by 1 point.
 
 == FAQ
 
