@@ -25,7 +25,6 @@ import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
  * Interface for the entry point class to the HW in this class. Our
  * client/testing code interfaces with the student solutions through this
  * interface only. <br>
- * More about facade: {@linkplain http://www.vincehuston.org/dp/facade.html}.
  */
 public class FvmFacade {
 
@@ -371,6 +370,16 @@ public class FvmFacade {
         return output;
     }
 
+    private <S1,S2> Set<Pair<S1,S2>> CartesianProduct(Set<S1> g1, Set<S2> g2){
+        Set<Pair<S1,S2>> output= new HashSet<>();
+        for (S1 s1:g1) {
+            for (S2 s2:g2) {
+                output.add(new Pair<S1,S2>(s1,s2));
+            }
+        }
+        return output;
+    }
+
     /**
      * Compute the synchronous product of two transition systems.
      *
@@ -384,7 +393,7 @@ public class FvmFacade {
      */
     public <S1, S2, A, P> TransitionSystem<Pair<S1, S2>, A, P> interleave(TransitionSystem<S1, A, P> ts1,
                                                                           TransitionSystem<S2, A, P> ts2) {
-        throw new java.lang.UnsupportedOperationException();
+        return interleave(ts1,ts2,new HashSet<>());
     }
 
     /**
@@ -401,7 +410,82 @@ public class FvmFacade {
      */
     public <S1, S2, A, P> TransitionSystem<Pair<S1, S2>, A, P> interleave(TransitionSystem<S1, A, P> ts1,
                                                                           TransitionSystem<S2, A, P> ts2, Set<A> handShakingActions) {
-        throw new java.lang.UnsupportedOperationException();
+
+        TransitionSystem<Pair<S1, S2>, A, P> output = new TransitionSystem();
+
+        for (Pair<S1, S2> initState : CartesianProduct(ts1.getInitialStates(), ts2.getInitialStates())) {
+            output.addInitialState(initState);
+        }
+
+        output.addAllStates(CartesianProduct(ts1.getStates(), ts2.getStates()));
+
+        output.addAllActions(ts1.getActions());
+        output.addAllActions(ts2.getActions());
+
+        output.addAllAtomicPropositions(ts1.getAtomicPropositions());
+        output.addAllAtomicPropositions(ts2.getAtomicPropositions());
+
+
+
+        //Transaction part
+        for (A action : output.getActions()) {
+            if (handShakingActions.contains(action)) {
+                for (TSTransition<S1, A> tst1 : ts1.getTransitions()) {
+                    for (TSTransition<S2, A> tst2 : ts2.getTransitions()) {
+                        //if i found transition with the handshake action add it to new ts
+                        if (tst1.getAction().equals(action) && tst2.getAction().equals(action)) {
+                            TSTransition handshake = new TSTransition
+                                    (new Pair<S1, S2>(tst1.getFrom(), tst2.getFrom()),
+                                            action,
+                                            new Pair<S1, S2>(tst1.getTo(), tst2.getTo()));
+                            output.addTransition(handshake);
+                        }
+                    }
+                }
+            } else {
+                //if this not handshake action -ts1
+                for(TSTransition<S1,A> tst1:ts1.getTransitions()){
+                    if(tst1.getAction().equals(action)){
+                        for (Pair<S1,S2> from: output.getStates()) {
+                            if(tst1.getFrom().equals(from.first)){
+                                for (Pair<S1,S2> to: output.getStates()) {
+                                    if(tst1.getTo().equals(to.first) && from.second.equals(to.second)){
+                                        output.addTransition(new TSTransition<>(from,action,to));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //if this not handshake action -ts2
+                for(TSTransition<S2,A> tst2:ts2.getTransitions()){
+                    if(tst2.getAction().equals(action)){
+                        for (Pair<S1,S2> from: output.getStates()) {
+                            if(tst2.getFrom().equals(from.second)){
+                                for (Pair<S1,S2> to: output.getStates()) {
+                                    if(tst2.getTo().equals(to.second)&& from.first.equals(to.first)){
+                                        output.addTransition(new TSTransition<>(from,action,to));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        //label part
+        for (Pair<S1,S2> state:output.getStates()) {
+            for (P label:ts1.getLabel(state.first)) {
+                output.addToLabel(state,label);
+            }
+            for (P label:ts2.getLabel(state.second)) {
+                output.addToLabel(state,label);
+            }
+        }
+        return output;
     }
 
     /**

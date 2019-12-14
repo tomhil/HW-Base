@@ -22,6 +22,14 @@ public class FvmFacadeTest {
     AlternatingSequence simpleSq;
     AlternatingSequence simpleSqNotInitial;
 
+    TransitionSystem interval_withHandshake1;
+    TransitionSystem interval_withHandshake2;
+    TransitionSystem interval_ans1_emptyH;
+    TransitionSystem interval_ans2_Hisa;
+    TransitionSystem interval_ans3__Hisa;
+
+
+
 
 
 
@@ -33,6 +41,28 @@ public class FvmFacadeTest {
         simpleSq=buildSimpleSq();
         simpleSqNotInitial=buildSimpleSqNotInitial();
 
+        intervalCreation();
+
+    }
+
+    private void intervalCreation() {
+        interval_withHandshake1=new TransitionSystem();
+        interval_withHandshake1.addInitialState(1);
+        interval_withHandshake1.addAllStates(new Integer[]{2});
+        interval_withHandshake1.addAllActions(new String[]{"l"});
+        interval_withHandshake1.addTransition(new TSTransition(1,"l",2));
+        interval_withHandshake1.addAllAtomicPropositions(new String[]{"x1","y1"});
+        interval_withHandshake1.addToLabel(1,"x1");
+        interval_withHandshake1.addToLabel(2,"y1");
+
+        interval_withHandshake2=new TransitionSystem();
+        interval_withHandshake2.addInitialState('a');
+        interval_withHandshake2.addAllStates(new Character[]{'b'});
+        interval_withHandshake2.addAllActions(new String[]{"m"});
+        interval_withHandshake2.addTransition(new TSTransition('a',"m",'b'));
+        interval_withHandshake2.addAllAtomicPropositions(new String[]{"x2","y2"});
+        interval_withHandshake2.addToLabel('a',"x2");
+        interval_withHandshake2.addToLabel('b',"y2");
     }
 
     private AlternatingSequence buildSimpleSq() {
@@ -306,7 +336,13 @@ public class FvmFacadeTest {
     }
 
     @Test
-    public void testInterleave() {
+    public void testInterleave_withHandshakeing() {
+        TransitionSystem ts1=fvmFacade.interleave(interval_withHandshake1,interval_withHandshake2,new HashSet<>());
+        HashSet<String> h=new HashSet<>();
+        h.add("l");
+        TransitionSystem ts2=fvmFacade.interleave(interval_withHandshake1,interval_withHandshake1,h);
+        TransitionSystem ts3=fvmFacade.interleave(interval_withHandshake1,interval_withHandshake2,h);
+
     }
 
     @Test
