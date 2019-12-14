@@ -10,11 +10,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.goal.GoalStructure;
 import il.ac.bgu.cs.formalmethodsintro.base.ltl.LTL;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ActionDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ConditionDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ParserBasedActDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ParserBasedCondDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ProgramGraph;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.*;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
@@ -510,7 +506,47 @@ public class FvmFacade {
      * @return Interleaved program graph.
      */
     public <L1, L2, A> ProgramGraph<Pair<L1, L2>, A> interleave(ProgramGraph<L1, A> pg1, ProgramGraph<L2, A> pg2) {
-        throw new java.lang.UnsupportedOperationException();
+        ProgramGraph<Pair<L1, L2>, A> output=new ProgramGraph<Pair<L1, L2>, A>();
+
+        for (Pair<L1,L2> location : CartesianProduct(pg1.getLocations(), pg2.getLocations())) {
+            output.addLocation(location);
+        }
+
+        for (Pair<L1,L2> initLoc : CartesianProduct(pg1.getInitialLocations(), pg2.getInitialLocations())) {
+            output.setInitial(initLoc,true);
+        }
+
+        for (List<String> initCondition:pg1.getInitalizations()) {
+            output.addInitalization(initCondition);
+        }
+
+        for (List<String> initCondition:pg2.getInitalizations()) {
+            output.addInitalization(initCondition);
+        }
+
+        //Transaction part
+        for(PGTransition<L1, A> transaction:pg1.getTransitions()){
+            for(L2 permanent:pg2.getLocations()){
+                output.addTransition(new PGTransition<Pair<L1,L2>,A>(
+                        new Pair<L1,L2>(transaction.getFrom(),permanent),
+                        transaction.getCondition(),
+                        transaction.getAction(),
+                        new Pair<L1,L2>(transaction.getTo(),permanent)
+                        ));
+            }
+        }
+        for(PGTransition<L2, A> transaction:pg2.getTransitions()){
+            for(L1 permanent:pg1.getLocations()){
+                output.addTransition(new PGTransition<Pair<L1,L2>,A>(
+                        new Pair<L1,L2>(permanent,transaction.getFrom()),
+                        transaction.getCondition(),
+                        transaction.getAction(),
+                        new Pair<L1,L2>(permanent,transaction.getFrom())
+                ));
+            }
+        }
+        return output;
+
     }
 
     /**
