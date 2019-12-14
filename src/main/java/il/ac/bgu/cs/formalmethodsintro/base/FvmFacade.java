@@ -104,7 +104,7 @@ public class FvmFacade {
      * @return {@code true} iff {@code e} is an execution of {@code ts}.
      */
     public <S, A, P> boolean isExecution(TransitionSystem<S, A, P> ts, AlternatingSequence<S, A> e) {
-        throw new java.lang.UnsupportedOperationException();
+        return isInitialExecutionFragment(ts,e) && isMaximalExecutionFragment(ts,e);
     }
 
     /**
@@ -146,7 +146,7 @@ public class FvmFacade {
      * {@code ts}.
      */
     public <S, A, P> boolean isInitialExecutionFragment(TransitionSystem<S, A, P> ts, AlternatingSequence<S, A> e) {
-        throw new java.lang.UnsupportedOperationException();
+        return ts.getInitialStates().contains(e.head()) && isExecutionFragment(ts,e);
     }
 
     /**
@@ -162,7 +162,7 @@ public class FvmFacade {
      * @return {@code true} iff {@code e} is a maximal fragment of {@code ts}.
      */
     public <S, A, P> boolean isMaximalExecutionFragment(TransitionSystem<S, A, P> ts, AlternatingSequence<S, A> e) {
-        throw new java.lang.UnsupportedOperationException();
+        return isExecutionFragment(ts,e) && isStateTerminal(ts,e.last());
     }
 
     /**
@@ -176,7 +176,9 @@ public class FvmFacade {
      * @throws StateNotFoundException if {@code s} is not a state of {@code ts}.
      */
     public <S, A> boolean isStateTerminal(TransitionSystem<S, A, ?> ts, S s) {
-        throw new java.lang.UnsupportedOperationException();
+        if (ts == null || !ts.getStates().contains(s))
+            throw new StateNotFoundException(s);
+        return post(ts,s).isEmpty();
     }
 
     /**

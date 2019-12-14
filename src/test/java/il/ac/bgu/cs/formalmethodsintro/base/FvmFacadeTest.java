@@ -20,6 +20,8 @@ public class FvmFacadeTest {
     TransitionSystem simple;
     TransitionSystem notDeterministic;
     AlternatingSequence simpleSq;
+    AlternatingSequence simpleSqNotInitial;
+
 
 
 
@@ -29,12 +31,20 @@ public class FvmFacadeTest {
         simple=buildSimpleTS();
         notDeterministic=buildnotDeterministicTS();
         simpleSq=buildSimpleSq();
+        simpleSqNotInitial=buildSimpleSqNotInitial();
 
     }
 
     private AlternatingSequence buildSimpleSq() {
         List<Integer> States= new ArrayList<Integer>(Arrays.asList(1, 3,4)) ;
         List<Character> Actions= new ArrayList<Character>(Arrays.asList('b','c'));
+        AlternatingSequence output=new AlternatingSequence(States,Actions);
+        return output;
+    }
+
+    private AlternatingSequence buildSimpleSqNotInitial() {
+        List<Integer> States= new ArrayList<Integer>(Arrays.asList(3,4)) ;
+        List<Character> Actions= new ArrayList<Character>(Arrays.asList('c'));
         AlternatingSequence output=new AlternatingSequence(States,Actions);
         return output;
     }
@@ -108,28 +118,49 @@ public class FvmFacadeTest {
 
     @Test
     public void isExecution() {
+        Assert.assertEquals(true,fvmFacade.isExecution(simple,simpleSq));
+        Assert.assertEquals(false,fvmFacade.isExecution(simple,simpleSqNotInitial));
+        List<Integer> States= new ArrayList<Integer>(Arrays.asList(1, 3)) ;
+        List<Character> Actions= new ArrayList<Character>(Arrays.asList('b'));
+        simpleSqNotInitial=new AlternatingSequence(States,Actions);
+        Assert.assertEquals(false,fvmFacade.isExecution(simple,simpleSqNotInitial));
     }
 
     @Test
     public void isExecutionFragment() {
-        fvmFacade.isExecutionFragment(simple,simpleSq);
-        Assert.assertTrue(fvmFacade.isExecutionFragment(simple,simpleSq));
+        boolean check=fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertTrue(check);
         simple.removeTransition(new TSTransition(3,'c',4));
-        fvmFacade.isExecutionFragment(simple,simpleSq);
-        Assert.assertFalse(fvmFacade.isExecutionFragment(simple,simpleSq));
-
+        check=fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertFalse(check);
     }
 
     @Test
     public void isInitialExecutionFragment() {
+        boolean check=fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertTrue(check);
+        simple.removeTransition(new TSTransition(3,'c',4));
+        check=fvmFacade.isExecutionFragment(simple,simpleSq);
+        Assert.assertFalse(check);
+        check=fvmFacade.isExecutionFragment(simple,simpleSqNotInitial);
+        Assert.assertFalse(check);
     }
 
     @Test
     public void isMaximalExecutionFragment() {
+        Assert.assertEquals(true,fvmFacade.isMaximalExecutionFragment(simple,simpleSq));
+        List<Integer> States= new ArrayList<Integer>(Arrays.asList(1, 3)) ;
+        List<Character> Actions= new ArrayList<Character>(Arrays.asList('b'));
+        simpleSqNotInitial=new AlternatingSequence(States,Actions);
+        Assert.assertEquals(false,fvmFacade.isMaximalExecutionFragment(simple,simpleSqNotInitial));
+
     }
 
     @Test
     public void isStateTerminal() {
+        Assert.assertEquals(false,fvmFacade.isStateTerminal(simple,1));
+        Assert.assertEquals(true,fvmFacade.isStateTerminal(simple,4));
+        Assert.assertEquals(true,fvmFacade.isStateTerminal(simple,5));
     }
 
     @Test
