@@ -1,5 +1,6 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
+import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
@@ -28,6 +29,8 @@ public class FvmFacadeTest {
     TransitionSystem interval_ans2_Hisa;
     TransitionSystem interval_ans3__Hisa;
 
+    Circuit c;
+
 
 
 
@@ -40,9 +43,47 @@ public class FvmFacadeTest {
         notDeterministic=buildnotDeterministicTS();
         simpleSq=buildSimpleSq();
         simpleSqNotInitial=buildSimpleSqNotInitial();
+        c=buildCircuit();
 
         intervalCreation();
 
+    }
+
+    private Circuit buildCircuit() {
+        Circuit output=new Circuit() {
+            @Override
+            public Set<String> getInputPortNames() {
+                return new HashSet<String>(Arrays.asList("x"));
+            }
+
+            @Override
+            public Set<String> getRegisterNames() {
+                return new HashSet<String>(Arrays.asList("r1","r2"));
+            }
+
+            @Override
+            public Set<String> getOutputPortNames() {
+                return new HashSet<String>(Arrays.asList("y"));
+            }
+
+            @Override
+            public Map<String, Boolean> updateRegisters(Map<String, Boolean> inputs, Map<String, Boolean> registers) {
+                Map<String, Boolean> output=new HashMap<>();
+                boolean r1= (inputs.get("x") && !registers.get("r1")) || (!inputs.get("x") && registers.get("r1"));
+                boolean r2=(!registers.get("r1")) && (inputs.get("x"));
+                output.put("r1",r1);
+                output.put("r2",r2);
+                return output;
+            }
+
+            @Override
+            public Map<String, Boolean> computeOutputs(Map<String, Boolean> inputs, Map<String, Boolean> registers) {
+                Map<String, Boolean> output=new HashMap<>();
+                output.put("y",registers.get("r1") && registers.get("r2"));
+                return output;
+            }
+        };
+        return output;
     }
 
     private void intervalCreation() {
@@ -355,6 +396,8 @@ public class FvmFacadeTest {
 
     @Test
     public void transitionSystemFromCircuit() {
+        TransitionSystem check=fvmFacade.transitionSystemFromCircuit(c);
+        Assert.assertTrue(Math.pow(2,c.getInputPortNames().size())*Math.pow(2,c.getRegisterNames().size())==check.getStates().size());
     }
 
     @Test

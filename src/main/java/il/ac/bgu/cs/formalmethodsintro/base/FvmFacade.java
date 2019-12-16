@@ -549,16 +549,108 @@ public class FvmFacade {
 
     }
 
+    private Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> CircuitStates (Set<String> registers,Set<String> inputs){
+        Set<Map<String, Boolean>> registersPowerGroup=PowerGroup(registers);
+        Set<Map<String, Boolean>> inputsPowerGroup=PowerGroup(inputs);
+        return CartesianProduct(inputsPowerGroup,registersPowerGroup);
+    }
+
+    private Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> GetInitStatesFromCircuit(Set<String> registerNames, Set<String> inputPortNames) {
+        Set<Map<String, Boolean>> inputsPowerGroup=PowerGroup(inputPortNames);
+        Set<Map<String, Boolean>> initRegistersGroup=new HashSet<>();
+        Map<String, Boolean> initRegisters=new HashMap<>();
+        for (String register: registerNames) {
+            initRegisters.put(register,false);
+        }
+        initRegistersGroup.add(initRegisters);
+        return CartesianProduct(inputsPowerGroup,initRegistersGroup);
+    }
+
+    private Set<Map<String, Boolean>> PowerGroup(Set<String> group ) {
+        Set<Map<String, Boolean>> powerGroup=new HashSet<>();
+        for (int i = 0; i < Math.pow(2, group.size()); i++) {
+            Map<String, Boolean> team = new HashMap<>();
+            for (int j = 0; j < group.size(); j++) {
+                if ((i & (1 << j)) > 0) {
+                    team.put((String) group.toArray()[j], true);
+                } else {
+                    team.put((String) group.toArray()[j], false);
+                }
+            }
+            powerGroup.add(team);
+        }
+        return powerGroup;
+    }
+
+
+
     /**
      * Creates a {@link TransitionSystem} representing the passed circuit.
      *
      * @param c The circuit to translate into a {@link TransitionSystem}.
      * @return A {@link TransitionSystem} representing {@code c}.
      */
-    public TransitionSystem<Pair<Map<String, Boolean>, Map<String, Boolean>>, Map<String, Boolean>, Object> transitionSystemFromCircuit(
+    public TransitionSystem<Pair<Map<String, Boolean>, Map<String, Boolean>>, Map<String, Boolean>, Object>
+    transitionSystemFromCircuit(
             Circuit c) {
-        throw new java.lang.UnsupportedOperationException();
+        TransitionSystem<Pair<Map<String, Boolean>, Map<String, Boolean>>, Map<String, Boolean>, Object> output=new TransitionSystem();
+
+        //state- 2^|X| x 2^|R|
+        output.addAllStates(CircuitStates(c.getRegisterNames(),c.getInputPortNames()));
+
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> initStates= GetInitStatesFromCircuit(c.getRegisterNames(),c.getInputPortNames());
+        for (Pair<Map<String, Boolean>, Map<String, Boolean>> initState: initStates) {
+            output.addInitialState(initState);
+        }
+
+        //action - {0,1}^|X|
+        output.addAllActions(PowerGroup(c.getInputPortNames()));
+
+        //atomic Propositions- all the inputs ,outputs and registers.
+        output.addAllAtomicPropositions(makeAtomicProposition(c.getInputPortNames(),c.getOutputPortNames(),c.getRegisterNames()));
+
+        //Transition ratio
+        for (Pair<Map<String, Boolean>, Map<String, Boolean>> from:output.getStates()) {
+            for ( Map<String, Boolean> action:output.getActions()) {
+                Pair<Map<String, Boolean>,Map<String, Boolean>> to=new Pair<>(action,
+                        c.updateRegisters(from.first,from.second));
+                output.addTransition(new TSTransition<>(from,action,to));
+            }
+        }
+
+        //label
+        for (Pair<Map<String, Boolean>, Map<String, Boolean>> state : output.getStates()) {
+            for(String label:ComputeLabel(state, c))
+                output.addToLabel(state,label);
+        }
+
+        return output;
+        }
+
+    private Set<String> ComputeLabel(Pair<Map<String, Boolean>, Map<String, Boolean>> state,Circuit c) {
+        Set<String> output=new HashSet<>();
+
+        GetLabelFromMap(output,c.computeOutputs(state.first,state.second));
+        GetLabelFromMap(output, state.first);
+        GetLabelFromMap(output, state.second);
+
+        return output;
     }
+
+    private void GetLabelFromMap(Set<String> output, Map<String, Boolean> entries) {
+        for (Map.Entry<String, Boolean> inputport : entries.entrySet()) {
+            if (inputport.getValue())
+                output.add(inputport.getKey());
+        }
+    }
+
+    private Iterable<Object> makeAtomicProposition(Set<String> inputPortNames, Set<String> outputPortNames, Set<String> registerNames) {
+        Set<Object> output = new HashSet<>(inputPortNames);
+        output.addAll(outputPortNames);
+        output.addAll(registerNames);
+        return output;
+    }
+
 
     /**
      * Creates a {@link TransitionSystem} from a program graph.
