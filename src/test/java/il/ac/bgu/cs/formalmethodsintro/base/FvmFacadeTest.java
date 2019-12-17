@@ -2,6 +2,10 @@ package il.ac.bgu.cs.formalmethodsintro.base;
 
 import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ActionDef;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ConditionDef;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.PGTransition;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ProgramGraph;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
@@ -31,6 +35,8 @@ public class FvmFacadeTest {
 
     Circuit c;
 
+    ProgramGraph<String,String> pg;
+
 
 
 
@@ -44,9 +50,28 @@ public class FvmFacadeTest {
         simpleSq=buildSimpleSq();
         simpleSqNotInitial=buildSimpleSqNotInitial();
         c=buildCircuit();
+        pg=buildPG();
 
         intervalCreation();
 
+    }
+
+    private ProgramGraph<String, String> buildPG() {
+        ProgramGraph<String, String> output=new ProgramGraph<>();
+        for(int i=0;i<2;i++)
+            output.addLocation("L"+i);
+        output.setInitial("L0",true);
+        List<String> initalization=new ArrayList<>(Arrays.asList("x==1"));
+        output.addInitalization(initalization);
+        initalization=new ArrayList<>(Arrays.asList("x==2"));
+        output.addInitalization(initalization);
+        output.addTransition(new PGTransition<>(
+                "L0",
+                "true",
+                "x=x+1",
+                "L1"
+        ));
+        return output;
     }
 
     private Circuit buildCircuit() {
@@ -402,6 +427,86 @@ public class FvmFacadeTest {
 
     @Test
     public void transitionSystemFromProgramGraph() {
+        ActionDef act=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return "x=x+1".equals(candidate);
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                Map<String, Object> newEta=new HashMap<>();
+                    for (Map.Entry<String,Object> var: eval.entrySet()) {
+                        if(isMatchingAction(action) && var.getValue() instanceof Integer)
+                            newEta.put(var.getKey(),((Integer)var.getValue())+1);
+                        else
+                            newEta.put(var.getKey(),((Integer)var.getValue()));
+                    }
+                    return newEta;
+            }
+        };
+        ActionDef initAct1=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return ((String) candidate).contains("x==1");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                Map<String, Object> newEta=new HashMap<>();
+                    if(isMatchingAction(action) )
+                        newEta.put("x",1);
+                return newEta;
+            }
+        };
+        ActionDef initAct2=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return ((String) candidate).contains("x==2");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                Map<String, Object> newEta=new HashMap<>();
+                    if(isMatchingAction(action) )
+                        newEta.put("x",2);
+                return newEta;
+            }
+        };
+        Set<ActionDef> actDef=new HashSet<>(Arrays.asList(act,initAct1,initAct2));
+        ConditionDef condInit=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                if(eval.containsKey("x")&&(((Integer) eval.get("x"))==1 && ((Integer)eval.get("x"))==2))
+                    return true;
+                return false;
+            }
+        };
+        ConditionDef condtrans=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                return true;
+            }
+        };
+        Set<ConditionDef> condDef=new HashSet<>(Arrays.asList(condInit,condtrans));
+
+        TransitionSystem check=fvmFacade.transitionSystemFromProgramGraph(pg,actDef,condDef);
+        Assert.assertTrue(2==check.getInitialStates().size());
+        Assert.assertTrue(4==check.getStates().size());
+        Assert.assertTrue(1==check.getActions().size());
+        Assert.assertTrue(5==check.getAtomicPropositions().size());
+
+
+
     }
 
     @Test

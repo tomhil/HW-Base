@@ -663,9 +663,74 @@ public class FvmFacade {
      *                      graph.
      * @return A transition system representing {@code pg}.
      */
-    public <L, A> TransitionSystem<Pair<L, Map<String, Object>>, A, String> transitionSystemFromProgramGraph(
-            ProgramGraph<L, A> pg, Set<ActionDef> actionDefs, Set<ConditionDef> conditionDefs) {
-        throw new java.lang.UnsupportedOperationException();
+    //ts output need to be with: location- Pair of <L-location in pg, eval thats
+    // map <var name, var val> , action- A and labal string
+    public <L, A> TransitionSystem<Pair<L, Map<String, Object>>, A, String> transitionSystemFromProgramGraph(ProgramGraph<L, A> pg, Set<ActionDef> actionDefs, Set<ConditionDef> conditionDefs) {
+
+        TransitionSystem<Pair<L, Map<String, Object>>, A, String> output=new TransitionSystem<>();
+
+        Set<String> conditions=new HashSet<>();
+        //init states
+        for (L initLocation: pg.getInitialLocations()) {
+            for( Map<String, Object> values: getInitValues(pg,actionDefs)){
+                output.addInitialState(new Pair<>(initLocation,values));
+            }
+        }
+        //add init Atomic Proposition
+        for (List<String> initConditionList:pg.getInitalizations()) {
+            for (String initCond:initConditionList) {
+                output.addAtomicProposition(initCond);
+                conditions.add(initCond);
+            }
+        }
+
+        //states and transitions
+        Set<Pair<L, Map<String, Object>>> tmpState=new HashSet<>(output.getInitialStates());
+        while(!tmpState.isEmpty()){
+            Pair<L, Map<String, Object>> from=tmpState.iterator().next();
+            L location=from.first;
+            Map<String, Object> eval=from.second;
+            for(PGTransition<L,A> transaction: pg.getTransitions()){
+                if(transaction.getFrom().equals(location) && ConditionDef.evaluate(conditionDefs,eval,transaction.getCondition())){
+                    Pair<L, Map<String, Object>> to= new Pair<>(transaction.getTo(),ActionDef.effect(actionDefs,eval,transaction.getAction()));
+                    if(!output.getStates().contains(to)){
+                        output.addState(to);
+                        tmpState.add(to);
+                    }
+                    output.addAction(transaction.getAction());
+                    output.addAtomicProposition(transaction.getCondition());
+                    output.addTransition(new TSTransition<>(from,transaction.getAction(),to));
+                    conditions.add(transaction.getCondition());
+                }
+            }
+            tmpState.remove(from);
+        }
+
+        //Labels
+        for (Pair<L, Map<String, Object>> state:output.getStates()) {
+            output.addAtomicProposition(state.getFirst().toString());
+            output.addToLabel(state,state.first.toString());
+            for (String condition: conditions) {
+                if(ConditionDef.evaluate(conditionDefs,state.second,condition))
+                    output.addToLabel(state,condition);
+            }
+        }
+        return output;
+    }
+
+    private <A, L> Set<Map<String, Object>>  getInitValues(ProgramGraph<L,A> pg, Set<ActionDef> actionDefs) {
+        Set<Map<String, Object>> output=new HashSet<>();
+        for (List<String> conditionList:pg.getInitalizations()) {
+            Map<String, Object> initialEvaluation=new HashMap<>();
+            for (String condition:conditionList) {
+                initialEvaluation=ActionDef.effect(actionDefs,initialEvaluation,condition);
+            }
+            output.add(initialEvaluation);
+        }
+        //g0 is empty
+        if(output.isEmpty())
+            output.add(new HashMap<>());
+        return output;
     }
 
 
