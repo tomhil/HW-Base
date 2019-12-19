@@ -1,11 +1,11 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
+import il.ac.bgu.cs.formalmethodsintro.base.channelsystem.ChannelSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ActionDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ConditionDef;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.PGTransition;
-import il.ac.bgu.cs.formalmethodsintro.base.programgraph.ProgramGraph;
+import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaFileReader;
+import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser;
+import il.ac.bgu.cs.formalmethodsintro.base.programgraph.*;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
@@ -14,6 +14,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.rmi.UnexpectedException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -37,6 +38,8 @@ public class FvmFacadeTest {
 
     ProgramGraph<String,String> pg;
 
+    ChannelSystem<String,String> cs;
+
 
 
 
@@ -51,9 +54,39 @@ public class FvmFacadeTest {
         simpleSqNotInitial=buildSimpleSqNotInitial();
         c=buildCircuit();
         pg=buildPG();
-
+        cs=csBuilder();
         intervalCreation();
 
+    }
+
+    private ChannelSystem<String, String> csBuilder() {
+        ProgramGraph<String,String> pgWriter=new ProgramGraph<String,String>();
+        for(int i=0;i<2;i++)
+            pgWriter.addLocation("L"+i);
+        pgWriter.setInitial("L0",true);
+        List<String> initalization=new ArrayList<>(Arrays.asList("C.isEmpty()"));
+        pgWriter.addInitalization(initalization);
+        pgWriter.addTransition(new PGTransition<>(
+                "L0",
+                "true",
+                "C!5",
+                "L1"
+        ));
+
+        ProgramGraph<String,String> pgReader=new ProgramGraph<String,String>();
+        for(int i=0;i<2;i++)
+            pgReader.addLocation("M"+i);
+        pgReader.setInitial("M0",true);
+        initalization=new ArrayList<>(Arrays.asList("x==0"));
+        pgReader.addInitalization(initalization);
+        pgReader.addTransition(new PGTransition<>(
+                "M0",
+                "!C.isEmpty()",
+                "C?x",
+                "M1"
+        ));
+
+        return new ChannelSystem<>(Arrays.asList(pgReader,pgWriter));
     }
 
     private ProgramGraph<String, String> buildPG() {
@@ -515,10 +548,151 @@ public class FvmFacadeTest {
 
     @Test
     public void testTransitionSystemFromChannelSystem() {
+        Set<ActionDef> actions = Collections.singleton(new ParserBasedActDef());
+        Set<ConditionDef> conditions = Collections.singleton(new ParserBasedCondDef());
+
+        ActionDef isEmptyAct=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return candidate.equals("isEmpty()");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                if(!eval.containsKey((String)action))
+                    throw new MissingFormatArgumentException("isEmptyAct - effect - the var not exists");
+                eval.put("isEmpty",eval.get("C").equals(""));
+                return eval;
+            }
+        };
+        ActionDef C5=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return candidate.equals("C!5");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                if(isMatchingAction(action))
+                    eval.put("C",(String)eval.get("C")+"5");
+                return eval;
+            }
+        };
+
+        ActionDef CX=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return candidate.equals("C?x");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                if(isMatchingAction(action)){
+                    eval.put("x",((String)eval.get("C")).charAt(0));
+                    eval.put("C",((String)eval.get("C")).substring(1));
+                }
+                return eval;
+            }
+        };
+        ActionDef x=new ActionDef() {
+            @Override
+            public boolean isMatchingAction(Object candidate) {
+                if(candidate instanceof String){
+                    return candidate.equals("x==0");
+                }
+                return false;
+            }
+
+            @Override
+            public Map<String, Object> effect(Map<String, Object> eval, Object action) {
+                if(isMatchingAction(action)){
+                    eval.put("x",0);
+                    eval.put("C","");
+                }
+                return eval;
+            }
+        };
+        ConditionDef t=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                if( condition.equals("true"))
+                    return true;
+                return false;
+            }
+        };
+        ConditionDef xcond=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                if( condition.equals("x==0"))
+                    return true;
+                return false;
+            }
+        };
+        ConditionDef isemptyCond1=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                if( condition.equals("C.isEmpty()"))
+                    return eval.containsKey("C") && eval.get("C").equals("");
+                return false;
+            }
+        };
+        ConditionDef isemptyCond2=new ConditionDef() {
+            @Override
+            public boolean evaluate(Map<String, Object> eval, String condition) {
+                if( condition.equals("!C.isEmpty()"))
+                    return !(eval.containsKey("C") && eval.get("C").equals(""));
+                return false;
+            }
+        };
+
+
+        Set<ConditionDef> condGroup=new HashSet<>(Arrays.asList(t,xcond,isemptyCond1,isemptyCond2));
+        Set<ActionDef> actGroup=new HashSet<>(Arrays.asList(isEmptyAct,x,C5,CX));
+
+        TransitionSystem check=fvmFacade.transitionSystemFromChannelSystem(cs,actGroup,condGroup);
+        Assert.assertTrue(check.getInitialStates().size()==1);
+    }
+
+    @Test
+    public void getInitLocations(){
+       Set<List<String>> check= fvmFacade.getInitLocations(cs);
+       Assert.assertTrue(1==check.size());
     }
 
     @Test
     public void programGraphFromNanoPromela() {
+        String codeVeryVerySimple= "x:=3";
+        String codeVerySimple= "x:=3;x?y";
+        String codeSimple= "x:=3;x?y;atomic{z1:=x+y;z2:=x-y}";
+        String codeIf= "if" +
+                "::x>1 -> c!5;c!6" +
+                "::x>1->c!30" +
+                "fi";
+        String codeDo="do" +
+                "::x>1 -> c!5;c!6" +
+                "::x>1->c!30" +
+                "od";
+        try {
+            ProgramGraph<String,String> check=fvmFacade.programGraphFromNanoPromelaString(codeSimple);
+            check=fvmFacade.programGraphFromNanoPromelaString(codeIf);
+            check=fvmFacade.programGraphFromNanoPromelaString(codeDo);
+            System.out.println("Done!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Done!");
+
     }
 
     @Test
