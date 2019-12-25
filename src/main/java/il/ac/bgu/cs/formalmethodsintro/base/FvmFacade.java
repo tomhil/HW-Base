@@ -633,9 +633,39 @@ public class FvmFacade {
             for (String label : ComputeLabel(state, c))
                 output.addToLabel(state, label);
         }
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> statesToRemove = GetStateToRemove(output);
+        for (Pair<Map<String, Boolean>, Map<String, Boolean>> state:statesToRemove) {
+            Set<TSTransition<Pair<Map<String, Boolean>, Map<String, Boolean>>,Map<String, Boolean>>> toRemove=new HashSet<>();
+            for (TSTransition<Pair<Map<String, Boolean>, Map<String, Boolean>>,Map<String, Boolean>> transition: output.getTransitions()) {
+                if(transition.getFrom().equals(state))
+                    toRemove.add(transition);
+            }
+            output.getTransitions().removeAll(toRemove);
+            output.getStates().remove(state);
+        }
+
 
         return output;
     }
+
+    private Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> GetStateToRemove(TransitionSystem<Pair<Map<String, Boolean>, Map<String, Boolean>>, Map<String, Boolean>, Object> ts) {
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> statesReach = new HashSet<>(ts.getInitialStates());
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> tmpStates = new HashSet<>(ts.getInitialStates());
+        while (!tmpStates.isEmpty()) {
+            Pair<Map<String, Boolean>, Map<String, Boolean>> state = tmpStates.iterator().next();
+            tmpStates.remove(state);
+            for (Pair<Map<String, Boolean>, Map<String, Boolean>> postStates : post(ts, state)) {
+                if (!statesReach.contains(postStates)) {
+                    statesReach.add(postStates);
+                    tmpStates.add(postStates);
+                }
+            }
+        }
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> output = new HashSet<>(ts.getInitialStates());
+        output.removeAll(statesReach);
+        return output;
+    }
+
 
     private Set<String> ComputeLabel(Pair<Map<String, Boolean>, Map<String, Boolean>> state, Circuit c) {
         Set<String> output = new HashSet<>();
@@ -847,10 +877,12 @@ public class FvmFacade {
                 for (String condition : condList) {
                     initialEvaluation = ActionDef.effect(actions, initialEvaluation, condition);
                 }
-                if (checkAllInitalizationsCondition(cs, conditions, initialEvaluation))
+//                if (checkAllInitalizationsCondition(cs, conditions, initialEvaluation))
                     output.add(initialEvaluation);
             }
         }
+        if(output.isEmpty())
+            output.add(new HashMap<>());
         return output;
     }
 
@@ -925,22 +957,6 @@ public class FvmFacade {
         return output;
     }
 
-    private Set<String> getNotReachLocation(ProgramGraph<String, String> pg) {
-        Set<String> reachLocation = new HashSet<>(pg.getInitialLocations());
-        Set<String> tmpLocation = new HashSet<>(pg.getInitialLocations());
-        while (!tmpLocation.isEmpty()) {
-            String from = tmpLocation.iterator().next();
-            tmpLocation.remove(from);
-            reachLocation.add(from);
-            for (PGTransition<String, String> transition : pg.getTransitions()) {
-                if (transition.getFrom().equals(from) && !reachLocation.contains(transition.getTo()))
-                    tmpLocation.add(transition.getTo());
-            }
-        }
-        Set<String> output = new HashSet<>(pg.getLocations());
-        output.removeAll(reachLocation);
-        return output;
-    }
 
     private boolean getStateAndTransitions(NanoPromelaParser.StmtContext root, Set<String> locations, Set<PGTransition<String, String>> transitions) {
         //Basic case of recursion
@@ -974,9 +990,9 @@ public class FvmFacade {
                         if ("".equals(transition.getTo())) {
                             to = doLocation;
                         } else {
-                            to = transition.getTo() + " ; " + doLocation;
+                            to = transition.getTo() + ";" + doLocation;
                         }
-                        String from = location + " ; " + doLocation;
+                        String from = location + ";" + doLocation;
                         toAdd.add(new PGTransition<>(
                                 from,
                                 transition.getCondition(),
@@ -994,7 +1010,7 @@ public class FvmFacade {
         for (NanoPromelaParser.OptionContext stmi : root.dostmt().option()) {
             if (!exitCondition.toString().contains(stmi.boolexpr().getText())) {
                 if (!exitCondition.toString().equals(""))
-                    exitCondition.append(" && ");
+                    exitCondition.append("&&");
                 exitCondition.append("!").append(stmi.boolexpr().getText());
             }
         }
@@ -1017,15 +1033,15 @@ public class FvmFacade {
                     String to = "";
                     //if to=ExitLocation -> second rule
                     if (!transition.getTo().equals(""))
-                        to = transition.getTo() + " ; ";
+                        to = transition.getTo() + ";";
                     to += doLocation;
                     toAdd.add(new PGTransition<>(
-                            from + " ; " + doLocation,
+                            from + ";" + doLocation,
                             condition,
                             transition.getAction(),
                             to
                     ));
-                    locations.add(from + " ; " + doLocation);
+                    locations.add(from + ";" + doLocation);
                     locations.add(to);
                 }
             }
@@ -1034,10 +1050,10 @@ public class FvmFacade {
         Set<PGTransition<String, String>> toAdd = new HashSet<>();
         for (PGTransition<String, String> transaction : transitions) {
             for (NanoPromelaParser.OptionContext stmi : root.dostmt().option()) {
-                if(transaction.getFrom().equals(stmi.stmt().getText()+ " ; " + doLocation)){
+                if (transaction.getFrom().equals(stmi.stmt().getText() + ";" + doLocation)) {
                     toAdd.add(new PGTransition<>(
                             doLocation,
-                            stmi.boolexpr().getText()+" & "+transaction.getCondition(),
+                            stmi.boolexpr().getText() + "&" + transaction.getCondition(),
                             transaction.getAction(),
                             transaction.getTo()
                     ));
@@ -1069,7 +1085,7 @@ public class FvmFacade {
             Set<PGTransition<String, String>> toAdd = new HashSet<>();
             for (PGTransition<String, String> transition : transitions) {
                 if (transition.getFrom().equals(from)) {
-                    String condition = stmi.boolexpr().getText() + " && " + transition.getCondition();
+                    String condition = stmi.boolexpr().getText() + "&&" + transition.getCondition();
                     toAdd.add(new PGTransition<>(
                             locationIf,
                             condition,
