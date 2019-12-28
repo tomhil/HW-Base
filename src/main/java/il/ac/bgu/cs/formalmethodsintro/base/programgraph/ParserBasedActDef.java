@@ -65,6 +65,7 @@ public class ParserBasedActDef implements ActionDef {
      */
     @Override
     public boolean isMatchingAction(Object action) {
+        StmtContext check =parseAction((String) action);
         return action.equals("") || parseAction((String) action) != null;
     }
 
