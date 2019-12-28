@@ -204,8 +204,8 @@ public class FvmFacade {
      * @throws StateNotFoundException if {@code s} is not a state of {@code ts}.
      */
     public <S> Set<S> post(TransitionSystem<S, ?, ?> ts, Set<S> c) {
-        if (ts == null)
-            throw new NullPointerException("public <S> Set<S> post(TransitionSystem<S, ?, ?> ts, Set<S> c)- Ts is null");
+        if (ts != null && !ts.getStates().containsAll(c))
+            throw new StateNotFoundException("public <S> Set<S> post(TransitionSystem<S, ?, ?> ts, Set<S> c)- Ts is null");
         Set<S> output = new HashSet<S>();
         for (S s : c) {
             output.addAll(post(ts, s));
@@ -224,7 +224,7 @@ public class FvmFacade {
      * @throws StateNotFoundException if {@code s} is not a state of {@code ts}.
      */
     public <S, A> Set<S> post(TransitionSystem<S, A, ?> ts, S s, A a) {
-        if (ts == null || !ts.getStates().contains(s))
+        if (!ts.getStates().contains(s))
             throw new StateNotFoundException(s);
         Set<S> output = new HashSet<S>();
         for (TSTransition<S, A> transition : ts.getTransitions()) {
@@ -244,8 +244,6 @@ public class FvmFacade {
      * in {@code c}, when action {@code a} is selected.
      */
     public <S, A> Set<S> post(TransitionSystem<S, A, ?> ts, Set<S> c, A a) {
-        if (ts == null)
-            throw new NullPointerException("<S, A> Set<S> post(TransitionSystem<S, A, ?> ts, Set<S> c, A a)- Ts is null");
         Set<S> output = new HashSet<S>();
         for (S s : c) {
             output.addAll(post(ts, s, a));
@@ -260,8 +258,6 @@ public class FvmFacade {
      * @return All the states in {@code Pre(s)}, in the context of {@code ts}.
      */
     public <S> Set<S> pre(TransitionSystem<S, ?, ?> ts, S s) {
-        if (ts == null || !ts.getStates().contains(s))
-            throw new StateNotFoundException(s);
         Set<S> output = new HashSet<S>();
         for (TSTransition<S, ?> transition : ts.getTransitions()) {
             if (transition.getTo().equals(s))
@@ -279,8 +275,8 @@ public class FvmFacade {
      * @throws StateNotFoundException if {@code s} is not a state of {@code ts}.
      */
     public <S> Set<S> pre(TransitionSystem<S, ?, ?> ts, Set<S> c) {
-        if (ts == null)
-            throw new NullPointerException(" public <S> Set<S> pre(TransitionSystem<S, ?, ?> ts, Set<S> c) - Ts is null");
+        if (ts != null && !ts.getStates().containsAll(c))
+            throw new StateNotFoundException(" public <S> Set<S> pre(TransitionSystem<S, ?, ?> ts, Set<S> c) - Ts is null");
         Set<S> output = new HashSet<S>();
         for (S s : c) {
             output.addAll(pre(ts, s));
@@ -321,7 +317,7 @@ public class FvmFacade {
      */
     public <S, A> Set<S> pre(TransitionSystem<S, A, ?> ts, Set<S> c, A a) {
         if (ts == null)
-            throw new NullPointerException(" <S, A> Set<S> pre(TransitionSystem<S, A, ?> ts, Set<S> c, A a)- Ts is null");
+            throw new StateNotFoundException(" <S, A> Set<S> pre(TransitionSystem<S, A, ?> ts, Set<S> c, A a)- Ts is null");
         Set<S> output = new HashSet<S>();
         for (S s : c) {
             output.addAll(pre(ts, s, a));
@@ -633,6 +629,7 @@ public class FvmFacade {
             for (String label : ComputeLabel(state, c))
                 output.addToLabel(state, label);
         }
+        //remove unreach states
         Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> statesToRemove = GetStateToRemove(output);
         for (Pair<Map<String, Boolean>, Map<String, Boolean>> state:statesToRemove) {
             Set<TSTransition<Pair<Map<String, Boolean>, Map<String, Boolean>>,Map<String, Boolean>>> toRemove=new HashSet<>();
@@ -640,9 +637,12 @@ public class FvmFacade {
                 if(transition.getFrom().equals(state))
                     toRemove.add(transition);
             }
-            output.getTransitions().removeAll(toRemove);
-            output.getStates().remove(state);
+            for (TSTransition<Pair<Map<String, Boolean>, Map<String, Boolean>>,Map<String, Boolean>> transaction:toRemove) {
+                    output.removeTransition(transaction);
+            }
+            output.removeState(state);
         }
+
 
 
         return output;
@@ -661,7 +661,7 @@ public class FvmFacade {
                 }
             }
         }
-        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> output = new HashSet<>(ts.getInitialStates());
+        Set<Pair<Map<String, Boolean>, Map<String, Boolean>>> output = new HashSet<>(ts.getStates());
         output.removeAll(statesReach);
         return output;
     }
@@ -709,18 +709,10 @@ public class FvmFacade {
 
         TransitionSystem<Pair<L, Map<String, Object>>, A, String> output = new TransitionSystem<>();
 
-        Set<String> conditions = new HashSet<>();
         //init states
         for (L initLocation : pg.getInitialLocations()) {
             for (Map<String, Object> values : getInitValues(pg, actionDefs)) {
                 output.addInitialState(new Pair<>(initLocation, values));
-            }
-        }
-        //add init Atomic Proposition
-        for (List<String> initConditionList : pg.getInitalizations()) {
-            for (String initCond : initConditionList) {
-                output.addAtomicProposition(initCond);
-                conditions.add(initCond);
             }
         }
 
@@ -738,22 +730,42 @@ public class FvmFacade {
                         tmpState.add(to);
                     }
                     output.addAction(transaction.getAction());
-                    output.addAtomicProposition(transaction.getCondition());
                     output.addTransition(new TSTransition<>(from, transaction.getAction(), to));
-                    conditions.add(transaction.getCondition());
                 }
             }
             tmpState.remove(from);
         }
 
-        //Labels
+        //Labels and Atomic Proposition
         for (Pair<L, Map<String, Object>> state : output.getStates()) {
-            output.addAtomicProposition(state.getFirst().toString());
-            output.addToLabel(state, state.first.toString());
-            for (String condition : conditions) {
-                if (ConditionDef.evaluate(conditionDefs, state.second, condition))
-                    output.addToLabel(state, condition);
+            if(!state.first.equals("")){
+                output.addAtomicProposition(state.getFirst().toString());
+                output.addToLabel(state, state.first.toString());
+                for (Map.Entry<String, Object> eval : state.second.entrySet()) {
+                    String atomicProposition= eval.getKey()+" = "+eval.getValue().toString();
+                    output.addAtomicProposition(atomicProposition);
+                    output.addToLabel(state,atomicProposition);
+                }
             }
+        }
+        return output;
+    }
+
+    private Set<String> CleanCondition(String condition) {
+        Set<String> output=new HashSet<>();
+        if(condition.contains("&")){
+            for (String cond:condition.split("&")) {
+                output.addAll(CleanCondition(cond));
+            }
+        }else if( condition.contains("|")) {
+            for (String cond : condition.split("|")) {
+                output.addAll(CleanCondition(cond));
+            }
+        }else if( condition.contains("(") && condition.contains(")") ) {
+            output.addAll(CleanCondition(condition.replaceAll("[\\[\\](){}]","")));
+        }
+        else{
+            output.add(condition);
         }
         return output;
     }
@@ -954,7 +966,38 @@ public class FvmFacade {
         for (PGTransition<String, String> transition : transitions) {
             output.addTransition(transition);
         }
+        //remove unreachable states and transactions
+        RemoveUnreachStatesAndTransaction(output);
         return output;
+    }
+
+    private void RemoveUnreachStatesAndTransaction(ProgramGraph<String, String> pg) {
+        Set<String> unReachLocation=new HashSet<>(pg.getLocations());
+        Set<String> tmpLocation=new HashSet<>(pg.getInitialLocations());
+        unReachLocation.removeAll(tmpLocation);
+        while(!tmpLocation.isEmpty()){
+            String location=tmpLocation.iterator().next();
+            for (PGTransition<String,String> transaction:pg.getTransitions()) {
+                if(transaction.getFrom().equals(location)){
+                    if(unReachLocation.contains(transaction.getTo())){
+                        unReachLocation.remove(transaction.getTo());
+                        tmpLocation.add(transaction.getTo());
+                    }
+                }
+            }
+            tmpLocation.remove(location);
+        }
+        for (String locationToRemove:unReachLocation) {
+            Set<PGTransition<String,String>> toRemove=new HashSet<>();
+            for (PGTransition<String,String> transaction:pg.getTransitions()) {
+                if(transaction.getFrom().equals(locationToRemove))
+                    toRemove.add(transaction);
+            }
+            for (PGTransition<String,String> transaction:toRemove) {
+                    pg.removeTransition(transaction);
+            }
+            pg.removeLocation(locationToRemove);
+        }
     }
 
 
@@ -1008,12 +1051,15 @@ public class FvmFacade {
         //third rule
         StringBuilder exitCondition = new StringBuilder();
         for (NanoPromelaParser.OptionContext stmi : root.dostmt().option()) {
-            if (!exitCondition.toString().contains(stmi.boolexpr().getText())) {
+            String check=stmi.boolexpr().getText();
+            if (!exitCondition.toString().contains(stmi.boolexpr().getText()) && !stmi.boolexpr().getText().contains("true")) {
                 if (!exitCondition.toString().equals(""))
                     exitCondition.append("&&");
-                exitCondition.append("!").append(stmi.boolexpr().getText());
+                exitCondition.append("!").append("("+stmi.boolexpr().getText()+")");
             }
         }
+        if(exitCondition.toString().equals(""))
+            exitCondition.append("!((true)||(true))");
         transitions.add(new PGTransition<>(
                 doLocation,
                 exitCondition.toString(),
@@ -1053,7 +1099,7 @@ public class FvmFacade {
                 if (transaction.getFrom().equals(stmi.stmt().getText() + ";" + doLocation)) {
                     toAdd.add(new PGTransition<>(
                             doLocation,
-                            stmi.boolexpr().getText() + "&" + transaction.getCondition(),
+                            "("+stmi.boolexpr().getText()+")" + "&&" + "("+transaction.getCondition()+")",
                             transaction.getAction(),
                             transaction.getTo()
                     ));
@@ -1068,6 +1114,11 @@ public class FvmFacade {
                 locationToRemove.add(location);
         }
         locations.removeAll(locationToRemove);
+
+        for (PGTransition<String,String> transaction:transitions) {
+            if(transaction.getCondition().equals("(true)&&(true)"))
+                transaction.setCondition("(true)");
+        }
         return true;
     }
 
@@ -1085,10 +1136,17 @@ public class FvmFacade {
             Set<PGTransition<String, String>> toAdd = new HashSet<>();
             for (PGTransition<String, String> transition : transitions) {
                 if (transition.getFrom().equals(from)) {
-                    String condition = stmi.boolexpr().getText() + "&&" + transition.getCondition();
+                    StringBuilder condition =new StringBuilder();
+                    if(!stmi.boolexpr().getText().contains("true"))
+                        condition.append("(").append(stmi.boolexpr().getText()).append(")");
+                    if(!transition.getCondition().contains("true")){
+                        if(!condition.toString().equals(""))
+                            condition.append("&&");
+                        condition.append("(").append(transition.getCondition()).append(")");
+                    }
                     toAdd.add(new PGTransition<>(
                             locationIf,
-                            condition,
+                            condition.toString(),
                             transition.getAction(),
                             transition.getTo()
                     ));
