@@ -498,6 +498,12 @@ public class FvmFacade {
         }
 
         //remove unreach states
+        removeUnreachStates(output);
+
+        return output;
+    }
+
+    private <S1, S2, A, P> void removeUnreachStates(TransitionSystem<Pair<S1, S2>, A, P> output) {
         Set<Pair<S1, S2>> unReach = new HashSet<>(output.getStates());
         unReach.removeAll(reach(output));
         Set<TSTransition<Pair<S1, S2>, A>> transitionToRemove = new HashSet<>();
@@ -513,8 +519,6 @@ public class FvmFacade {
         for (Pair<S1, S2> state : unReach) {
             output.removeState(state);
         }
-
-        return output;
     }
 
     /**
@@ -1409,11 +1413,53 @@ public class FvmFacade {
      * @param aut    The automaton.
      * @return The product of {@code ts} with {@code aut}.
      */
-    public <
-            Sts, Saut, A, P> TransitionSystem<Pair<Sts, Saut>, A, Saut> product(TransitionSystem<Sts, A, P> ts,
-                                                                                Automaton<Saut, P> aut) {
-        throw new java.lang.UnsupportedOperationException();
+    public <Sts, Saut, A, P> TransitionSystem<Pair<Sts, Saut>, A, Saut> product(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut) {
+        TransitionSystem<Pair<Sts, Saut>, A, Saut> output=new TransitionSystem<>();
+        addAllInitialState(ts,aut,output);
+        output.addAllActions(ts.getActions());
+        addallstates(ts,aut,output);
+        addAllTransaction(ts,aut,output);
+        removeUnreachStates(output);
+        addAtomicPropositionAndLabels(output);
+        return output;
     }
+
+    private <Saut, Sts, A> void addAtomicPropositionAndLabels(TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
+        for (Pair<Sts,Saut> state: output.getStates()) {
+            output.addAtomicProposition(state.second);
+            output.addToLabel(state,state.second);
+        }
+    }
+
+    private <Sts, A, P, Saut> void addAllTransaction(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
+        for (Saut autStateFrom:aut.getTransitions().keySet()) {
+            for(TSTransition<Sts, A> tsTransition:ts.getTransitions()){
+                Set<Saut> autTo = aut.getTransitions().get(autStateFrom).get(ts.getLabel(tsTransition.getTo()));
+                if(autTo==null || autTo.size()==0)
+                    continue;
+                for(Saut autToState:autTo){
+                    Pair<Sts, Saut> from=new Pair<>(tsTransition.getFrom(),autStateFrom);
+                    Pair<Sts, Saut> to=new Pair<>(tsTransition.getTo(),autToState);
+                    output.addTransition(new TSTransition<>(from,tsTransition.getAction(),to));
+                }
+            }
+        }
+    }
+
+    private <Sts, A, P, Saut> void addallstates(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
+        output.addAllStates(CartesianProduct(ts.getStates(),aut.getTransitions().keySet()));
+    }
+
+    private <Sts, A, P, Saut> void addAllInitialState(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
+        for (Sts  s0 : ts.getInitialStates()) {
+            for (Saut q0 : aut.getInitialStates()) {
+                for (Saut q : aut.getTransitions().get(q0).get(ts.getLabel(s0))) {
+                    output.addInitialState(new Pair<>(s0,q));
+                }
+            }
+        }
+    }
+
 
     /**
      * Verify that a system satisfies an omega regular property.
