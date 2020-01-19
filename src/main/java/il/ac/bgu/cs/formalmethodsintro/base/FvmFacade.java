@@ -1,8 +1,8 @@
 package il.ac.bgu.cs.formalmethodsintro.base;
 
 import java.io.InputStream;
+import java.rmi.UnexpectedException;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import il.ac.bgu.cs.formalmethodsintro.base.automata.Automaton;
 import il.ac.bgu.cs.formalmethodsintro.base.automata.MultiColorAutomaton;
@@ -20,6 +20,8 @@ import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.AlternatingSequence
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TSTransition;
 import il.ac.bgu.cs.formalmethodsintro.base.transitionsystem.TransitionSystem;
 import il.ac.bgu.cs.formalmethodsintro.base.util.Pair;
+import il.ac.bgu.cs.formalmethodsintro.base.verification.VeficationSucceeded;
+import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationFailed;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
 
 /**
@@ -1475,10 +1477,99 @@ public class FvmFacade {
      * @return A VerificationSucceeded object or a VerificationFailed object
      * with a counterexample.
      */
-    public <
-            S, A, P, Saut> VerificationResult<S> verifyAnOmegaRegularProperty(TransitionSystem<S, A, P> ts,
-                                                                              Automaton<Saut, P> aut) {
-        throw new java.lang.UnsupportedOperationException();
+    public <S, A, P, Saut> VerificationResult<S> verifyAnOmegaRegularProperty(TransitionSystem<S, A, P> ts, Automaton<Saut, P> aut) {
+         TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck=product(ts,aut);
+         for(Pair<S,Saut>state:tsToCheck.getStates()){
+             for(Saut label:tsToCheck.getLabel(state)){
+                 if(isAcceptanceState(state,aut)){
+                     if(cycleCheck(state,tsToCheck)){
+                        return verifyfailure(state,tsToCheck);
+                     }
+                 }
+             }
+         }
+         return new VeficationSucceeded<>();
+    }
+
+    private <S, Saut, A> VerificationResult<S> verifyfailure(Pair<S,Saut> state, TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck) {
+        VerificationFailed<S> output=new VerificationFailed<>();
+        try {
+            List<S> prefix=getPrefix(tsToCheck,state);
+            List<S> cycle=getCycle(tsToCheck,state);
+            output.setPrefix(prefix);
+            output.setCycle(cycle);
+            return output;
+        } catch (UnexpectedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private <S, A, Saut> List<S> getPrefix(TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck, Pair<S,Saut> state) throws UnexpectedException {
+        Queue<List<Pair<S,Saut>>> paths=new ArrayDeque<>();
+        for (Pair<S,Saut> initState:tsToCheck.getInitialStates()) {
+            paths.add(new ArrayList<Pair<S,Saut>>(Collections.singletonList(initState)));
+        }
+        while(!paths.isEmpty()){
+            List<Pair<S,Saut>> path=paths.poll();
+            if(path.get(path.size()-1).equals(state))
+                return convertToListOfS(path);
+            for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
+                List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+                toInsertPath.add(toInsert);
+                paths.add(toInsertPath);
+            }
+        }
+        throw new UnexpectedException("The state is unreachable");
+    }
+
+    private <S, Saut> List<S> convertToListOfS(List<Pair<S,Saut>> path) {
+        List<S> output=new ArrayList<>();
+        for (Pair<S,Saut> state:path) {
+            output.add(state.first);
+        }
+        return output;
+    }
+
+    private <S, A, Saut> List<S> getCycle(TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck, Pair<S,Saut> state) throws UnexpectedException {
+        Queue<List<Pair<S,Saut>>> paths=new ArrayDeque<>();
+        paths.add(new ArrayList<Pair<S,Saut>>(Collections.singletonList(state)));
+        List<Pair<S,Saut>> path=paths.poll();
+        for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
+            List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+            toInsertPath.add(toInsert);
+            paths.add(toInsertPath);
+        }
+        while(!paths.isEmpty()){
+            path=paths.poll();
+            if(path.get(path.size()-1).equals(state))
+                return convertToListOfS(path);
+            for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
+                List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+                toInsertPath.add(toInsert);
+                paths.add(toInsertPath);
+            }
+        }
+        throw new UnexpectedException("The state is unreachable");
+    }
+
+    private <Saut, A,S,P> boolean cycleCheck(Pair<S,Saut> state, TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck) {
+            Set<Pair<S, Saut>> reachable=new HashSet<Pair<S, Saut>>(post(tsToCheck,state));
+            Set<Pair<S, Saut>> visited=new HashSet<Pair<S, Saut>>();
+            visited.add(state);
+            while(!visited.equals(reachable)){
+                if(reachable.contains(state))
+                    return true;
+                visited.addAll(reachable);
+                reachable = new HashSet<>(post(tsToCheck, visited));
+            }
+        if(reachable.contains(state))
+            return true;
+        return false;
+    }
+
+    private <Saut, S,P> boolean isAcceptanceState(Pair<S,Saut> state, Automaton<Saut,P> aut) {
+        return aut.getAcceptingStates().contains(state.second);
     }
 
     /**
