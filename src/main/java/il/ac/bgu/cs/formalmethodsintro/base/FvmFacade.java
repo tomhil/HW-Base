@@ -909,12 +909,12 @@ public class FvmFacade {
                                 actBuilder = new StringBuilder(actBuilder.substring(0, actBuilder.indexOf("?")));
                                 actBuilder.append("!");
                             }
-                            Pair<Integer,PGTransition<L, A>> couple=getCoupleTransaction(transaction, actBuilder.toString(), cs,locations,conditions,eval);
+                            Pair<Integer, PGTransition<L, A>> couple = getCoupleTransaction(transaction, actBuilder.toString(), cs, locations, conditions, eval);
                             List<L> toLocations = new ArrayList<>(locations);
                             toLocations.set(i, transaction.getTo());
-                            toLocations.set(couple.first,couple.second.getTo());
+                            toLocations.set(couple.first, couple.second.getTo());
 
-                            Pair<List<L>, Map<String, Object>> to = new Pair<>(toLocations, ActionDef.effect(actions, eval, (A)(couple.second.getAction().toString()+ "|"+ transaction.getAction().toString())));
+                            Pair<List<L>, Map<String, Object>> to = new Pair<>(toLocations, ActionDef.effect(actions, eval, (A) (couple.second.getAction().toString() + "|" + transaction.getAction().toString())));
                             if (to.second == null)
                                 to = new Pair<>(toLocations, new HashMap<>());
                             if (!output.getStates().contains(to)) {
@@ -950,19 +950,19 @@ public class FvmFacade {
         return output;
     }
 
-    private <A, L> Pair<Integer, PGTransition<L,A>> getCoupleTransaction(PGTransition<L, A> transaction, String action, ChannelSystem<L, A> cs, List<L> locations, Set<ConditionDef> conditions, Map<String, Object> eval) {
-            int coupleIndex;
-            for(coupleIndex=0;coupleIndex<cs.getProgramGraphs().size();coupleIndex++){
-                ProgramGraph<L,A> pg=cs.getProgramGraphs().get(coupleIndex);
-                if(pg.getTransitions().contains(transaction))
-                    continue;
-                L from=locations.get(cs.getProgramGraphs().size() - 1 - coupleIndex);
-                for (PGTransition<L,A> coupleTransition: pg.getTransitions()) {
-                    if(coupleTransition.getFrom().equals(from)&& ConditionDef.evaluate(conditions,eval,coupleTransition.getCondition())&&coupleTransition.getAction().toString().contains(action))
-                        return new Pair<>(coupleIndex,coupleTransition);
-                }
+    private <A, L> Pair<Integer, PGTransition<L, A>> getCoupleTransaction(PGTransition<L, A> transaction, String action, ChannelSystem<L, A> cs, List<L> locations, Set<ConditionDef> conditions, Map<String, Object> eval) {
+        int coupleIndex;
+        for (coupleIndex = 0; coupleIndex < cs.getProgramGraphs().size(); coupleIndex++) {
+            ProgramGraph<L, A> pg = cs.getProgramGraphs().get(coupleIndex);
+            if (pg.getTransitions().contains(transaction))
+                continue;
+            L from = locations.get(cs.getProgramGraphs().size() - 1 - coupleIndex);
+            for (PGTransition<L, A> coupleTransition : pg.getTransitions()) {
+                if (coupleTransition.getFrom().equals(from) && ConditionDef.evaluate(conditions, eval, coupleTransition.getCondition()) && coupleTransition.getAction().toString().contains(action))
+                    return new Pair<>(coupleIndex, coupleTransition);
             }
-            return new Pair<>(-1,new PGTransition<>());
+        }
+        return new Pair<>(-1, new PGTransition<>());
     }
 
 
@@ -1416,47 +1416,47 @@ public class FvmFacade {
      * @return The product of {@code ts} with {@code aut}.
      */
     public <Sts, Saut, A, P> TransitionSystem<Pair<Sts, Saut>, A, Saut> product(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut) {
-        TransitionSystem<Pair<Sts, Saut>, A, Saut> output=new TransitionSystem<>();
-        addAllInitialState(ts,aut,output);
+        TransitionSystem<Pair<Sts, Saut>, A, Saut> output = new TransitionSystem<>();
+        addAllInitialState(ts, aut, output);
         output.addAllActions(ts.getActions());
-        addallstates(ts,aut,output);
-        addAllTransaction(ts,aut,output);
+        addallstates(ts, aut, output);
+        addAllTransaction(ts, aut, output);
         removeUnreachStates(output);
         addAtomicPropositionAndLabels(output);
         return output;
     }
 
-    private <Saut, Sts, A> void addAtomicPropositionAndLabels(TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
-        for (Pair<Sts,Saut> state: output.getStates()) {
+    private <Saut, Sts, A> void addAtomicPropositionAndLabels(TransitionSystem<Pair<Sts, Saut>, A, Saut> output) {
+        for (Pair<Sts, Saut> state : output.getStates()) {
             output.addAtomicProposition(state.second);
-            output.addToLabel(state,state.second);
+            output.addToLabel(state, state.second);
         }
     }
 
-    private <Sts, A, P, Saut> void addAllTransaction(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
-        for (Saut autStateFrom:aut.getTransitions().keySet()) {
-            for(TSTransition<Sts, A> tsTransition:ts.getTransitions()){
+    private <Sts, A, P, Saut> void addAllTransaction(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut, TransitionSystem<Pair<Sts, Saut>, A, Saut> output) {
+        for (Saut autStateFrom : aut.getTransitions().keySet()) {
+            for (TSTransition<Sts, A> tsTransition : ts.getTransitions()) {
                 Set<Saut> autTo = aut.getTransitions().get(autStateFrom).get(ts.getLabel(tsTransition.getTo()));
-                if(autTo==null || autTo.size()==0)
+                if (autTo == null || autTo.size() == 0)
                     continue;
-                for(Saut autToState:autTo){
-                    Pair<Sts, Saut> from=new Pair<>(tsTransition.getFrom(),autStateFrom);
-                    Pair<Sts, Saut> to=new Pair<>(tsTransition.getTo(),autToState);
-                    output.addTransition(new TSTransition<>(from,tsTransition.getAction(),to));
+                for (Saut autToState : autTo) {
+                    Pair<Sts, Saut> from = new Pair<>(tsTransition.getFrom(), autStateFrom);
+                    Pair<Sts, Saut> to = new Pair<>(tsTransition.getTo(), autToState);
+                    output.addTransition(new TSTransition<>(from, tsTransition.getAction(), to));
                 }
             }
         }
     }
 
-    private <Sts, A, P, Saut> void addallstates(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
-        output.addAllStates(CartesianProduct(ts.getStates(),aut.getTransitions().keySet()));
+    private <Sts, A, P, Saut> void addallstates(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut, TransitionSystem<Pair<Sts, Saut>, A, Saut> output) {
+        output.addAllStates(CartesianProduct(ts.getStates(), aut.getTransitions().keySet()));
     }
 
-    private <Sts, A, P, Saut> void addAllInitialState(TransitionSystem<Sts,A,P> ts, Automaton<Saut,P> aut, TransitionSystem<Pair<Sts,Saut>,A,Saut> output) {
-        for (Sts  s0 : ts.getInitialStates()) {
+    private <Sts, A, P, Saut> void addAllInitialState(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut, TransitionSystem<Pair<Sts, Saut>, A, Saut> output) {
+        for (Sts s0 : ts.getInitialStates()) {
             for (Saut q0 : aut.getInitialStates()) {
                 for (Saut q : aut.getTransitions().get(q0).get(ts.getLabel(s0))) {
-                    output.addInitialState(new Pair<>(s0,q));
+                    output.addInitialState(new Pair<>(s0, q));
                 }
             }
         }
@@ -1478,24 +1478,24 @@ public class FvmFacade {
      * with a counterexample.
      */
     public <S, A, P, Saut> VerificationResult<S> verifyAnOmegaRegularProperty(TransitionSystem<S, A, P> ts, Automaton<Saut, P> aut) {
-         TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck=product(ts,aut);
-         for(Pair<S,Saut>state:tsToCheck.getStates()){
-             for(Saut label:tsToCheck.getLabel(state)){
-                 if(isAcceptanceState(state,aut)){
-                     if(cycleCheck(state,tsToCheck)){
-                        return verifyfailure(state,tsToCheck);
-                     }
-                 }
-             }
-         }
-         return new VeficationSucceeded<>();
+        TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck = product(ts, aut);
+        for (Pair<S, Saut> state : tsToCheck.getStates()) {
+            for (Saut label : tsToCheck.getLabel(state)) {
+                if (isAcceptanceState(state, aut)) {
+                    if (cycleCheck(state, tsToCheck)) {
+                        return verifyfailure(state, tsToCheck);
+                    }
+                }
+            }
+        }
+        return new VeficationSucceeded<>();
     }
 
-    private <S, Saut, A> VerificationResult<S> verifyfailure(Pair<S,Saut> state, TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck) {
-        VerificationFailed<S> output=new VerificationFailed<>();
+    private <S, Saut, A> VerificationResult<S> verifyfailure(Pair<S, Saut> state, TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck) {
+        VerificationFailed<S> output = new VerificationFailed<>();
         try {
-            List<S> prefix=getPrefix(tsToCheck,state);
-            List<S> cycle=getCycle(tsToCheck,state);
+            List<S> prefix = getPrefix(tsToCheck, state);
+            List<S> cycle = getCycle(tsToCheck, state);
             output.setPrefix(prefix);
             output.setCycle(cycle);
             return output;
@@ -1505,17 +1505,19 @@ public class FvmFacade {
         return null;
     }
 
-    private <S, A, Saut> List<S> getPrefix(TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck, Pair<S,Saut> state) throws UnexpectedException {
-        Queue<List<Pair<S,Saut>>> paths=new ArrayDeque<>();
-        for (Pair<S,Saut> initState:tsToCheck.getInitialStates()) {
-            paths.add(new ArrayList<Pair<S,Saut>>(Collections.singletonList(initState)));
+    private <S, A, Saut> List<S> getPrefix(TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck, Pair<S, Saut> state) throws UnexpectedException {
+        Queue<List<Pair<S, Saut>>> paths = new ArrayDeque<>();
+        for (Pair<S, Saut> initState : tsToCheck.getInitialStates()) {
+            paths.add(new ArrayList<Pair<S, Saut>>(Collections.singletonList(initState)));
         }
-        while(!paths.isEmpty()){
-            List<Pair<S,Saut>> path=paths.poll();
-            if(path.get(path.size()-1).equals(state))
+        while (!paths.isEmpty()) {
+            List<Pair<S, Saut>> path = paths.poll();
+            if (path.get(path.size() - 1).equals(state)) {
+                path.remove(path.size() - 1);
                 return convertToListOfS(path);
-            for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
-                List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+            }
+            for (Pair<S, Saut> toInsert : post(tsToCheck, path.get(path.size() - 1))) {
+                List<Pair<S, Saut>> toInsertPath = new ArrayList<Pair<S, Saut>>(path);
                 toInsertPath.add(toInsert);
                 paths.add(toInsertPath);
             }
@@ -1523,29 +1525,31 @@ public class FvmFacade {
         throw new UnexpectedException("The state is unreachable");
     }
 
-    private <S, Saut> List<S> convertToListOfS(List<Pair<S,Saut>> path) {
-        List<S> output=new ArrayList<>();
-        for (Pair<S,Saut> state:path) {
+    private <S, Saut> List<S> convertToListOfS(List<Pair<S, Saut>> path) {
+        List<S> output = new ArrayList<>();
+        for (Pair<S, Saut> state : path) {
             output.add(state.first);
         }
         return output;
     }
 
-    private <S, A, Saut> List<S> getCycle(TransitionSystem<Pair<S,Saut>,A,Saut> tsToCheck, Pair<S,Saut> state) throws UnexpectedException {
-        Queue<List<Pair<S,Saut>>> paths=new ArrayDeque<>();
-        paths.add(new ArrayList<Pair<S,Saut>>(Collections.singletonList(state)));
-        List<Pair<S,Saut>> path=paths.poll();
-        for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
-            List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+    private <S, A, Saut> List<S> getCycle(TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck, Pair<S, Saut> state) throws UnexpectedException {
+        Queue<List<Pair<S, Saut>>> paths = new ArrayDeque<>();
+        paths.add(new ArrayList<Pair<S, Saut>>(Collections.singletonList(state)));
+        List<Pair<S, Saut>> path = paths.poll();
+        for (Pair<S, Saut> toInsert : post(tsToCheck, path.get(path.size() - 1))) {
+            List<Pair<S, Saut>> toInsertPath = new ArrayList<Pair<S, Saut>>(path);
             toInsertPath.add(toInsert);
             paths.add(toInsertPath);
         }
-        while(!paths.isEmpty()){
-            path=paths.poll();
-            if(path.get(path.size()-1).equals(state))
+        while (!paths.isEmpty()) {
+            path = paths.poll();
+            if (path.get(path.size() - 1).equals(state)) {
+                path.remove(path.size() - 1);
                 return convertToListOfS(path);
-            for (Pair<S,Saut> toInsert:post(tsToCheck,path.get(path.size()-1))) {
-                List<Pair<S,Saut>> toInsertPath = new ArrayList<Pair<S,Saut>>(path);
+            }
+            for (Pair<S, Saut> toInsert : post(tsToCheck, path.get(path.size() - 1))) {
+                List<Pair<S, Saut>> toInsertPath = new ArrayList<Pair<S, Saut>>(path);
                 toInsertPath.add(toInsert);
                 paths.add(toInsertPath);
             }
@@ -1553,22 +1557,22 @@ public class FvmFacade {
         throw new UnexpectedException("The state is unreachable");
     }
 
-    private <Saut, A,S,P> boolean cycleCheck(Pair<S,Saut> state, TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck) {
-            Set<Pair<S, Saut>> reachable=new HashSet<Pair<S, Saut>>(post(tsToCheck,state));
-            Set<Pair<S, Saut>> visited=new HashSet<Pair<S, Saut>>();
-            visited.add(state);
-            while(!visited.equals(reachable)){
-                if(reachable.contains(state))
-                    return true;
-                visited.addAll(reachable);
-                reachable = new HashSet<>(post(tsToCheck, visited));
-            }
-        if(reachable.contains(state))
+    private <Saut, A, S, P> boolean cycleCheck(Pair<S, Saut> state, TransitionSystem<Pair<S, Saut>, A, Saut> tsToCheck) {
+        Set<Pair<S, Saut>> reachable = new HashSet<Pair<S, Saut>>(post(tsToCheck, state));
+        Set<Pair<S, Saut>> visited = new HashSet<Pair<S, Saut>>();
+        visited.add(state);
+        while (!visited.equals(reachable)) {
+            if (reachable.contains(state))
+                return true;
+            visited.addAll(reachable);
+            reachable = new HashSet<>(post(tsToCheck, visited));
+        }
+        if (reachable.contains(state))
             return true;
         return false;
     }
 
-    private <Saut, S,P> boolean isAcceptanceState(Pair<S,Saut> state, Automaton<Saut,P> aut) {
+    private <Saut, S, P> boolean isAcceptanceState(Pair<S, Saut> state, Automaton<Saut, P> aut) {
         return aut.getAcceptingStates().contains(state.second);
     }
 
@@ -1593,7 +1597,69 @@ public class FvmFacade {
      * @return An equivalent automaton with a single set of accepting states.
      */
     public <L> Automaton<?, L> GNBA2NBA(MultiColorAutomaton<?, L> mulAut) {
-        throw new java.lang.UnsupportedOperationException();
+        Automaton<Pair<?, Integer>, L> output = new Automaton<>();
+        List<Integer> colors = new ArrayList<Integer>(mulAut.getColors());
+        Collections.sort(colors);
+        if (colors.size() == 0)
+            colors.add(1);
+        addInitStateToNBA(mulAut, colors.get(0), output);
+        getAcceptingState(mulAut, colors.get(0), output);
+        addAllStatesAnsTransitions(mulAut, colors, output);
+        return output;
+    }
+
+    private <L> void addAllStatesAnsTransitions(MultiColorAutomaton<?,L> mulAut, List<Integer> colors, Automaton<Pair<?, Integer>,L> output) {
+        Queue<Pair<?, Integer>> workList = new ArrayDeque<>(output.getInitialStates());
+        Set<Pair<?, Integer>> visited = new HashSet<>(output.getInitialStates());
+        while(!visited.isEmpty()){
+            Pair<?, Integer> from=workList.poll();
+            if(thereAreTranistion(mulAut,from)){
+                //find the right color level
+                int colorToMoveForward=getNextColor(mulAut,from,colors);
+                //for each action
+                for(Set<L> action:mulAut.getTransitions().get(from.first).keySet()){
+                    for(Object toFirst: mulAut.getTransitions().get(from.first).entrySet()){
+                        Pair<?, Integer> to=new Pair<>(toFirst,colorToMoveForward);
+                        if(!visited.contains(to)){
+                            output.addState(to);
+                            visited.add(to);
+                            workList.add(to);
+                        }
+                        output.addTransition(from,action,to);
+                    }
+                }
+            }
+        }
+    }
+
+    private <L> int getNextColor(MultiColorAutomaton<?,L> mulAut, Pair<?, Integer> from,List<Integer> colors) {
+        Integer currColor=from.second;
+        //if you arrived to accepting state move forward otherwise return the same color
+        if(mulAut.getAcceptingStates(currColor).contains(from.first)){
+            //find the next color index.
+            //Note: color.size= num of colors in all GNBA;
+            int nextColorIndex=(colors.indexOf(currColor)+1)%colors.size();
+            return colors.get(nextColorIndex);
+        }
+        return currColor;
+    }
+
+    private <L> boolean thereAreTranistion(MultiColorAutomaton<?,L> mulAut, Pair<?, Integer> from) {
+        return mulAut.getTransitions().get(from.first)!=null;
+    }
+
+    private <L> void getAcceptingState(MultiColorAutomaton<?, L> mulAut, Integer color, Automaton<Pair<?, Integer>, L> output) {
+        for (Object accState : mulAut.getAcceptingStates(color)) {
+            output.addState(new Pair<>(accState, color));
+            output.setAccepting(new Pair<>(accState, color));
+        }
+    }
+
+    private <L> void addInitStateToNBA(MultiColorAutomaton<?, L> mulAut, Integer initColors, Automaton<Pair<?, Integer>, L> output) {
+        for (Object initState : mulAut.getInitialStates()) {
+            output.addState(new Pair<>(initState, initColors));
+            output.setInitial(new Pair<>(initState, initColors));
+        }
     }
 
 
