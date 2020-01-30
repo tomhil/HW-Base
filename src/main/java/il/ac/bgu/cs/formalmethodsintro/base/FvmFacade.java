@@ -12,7 +12,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.channelsystem.ParserBasedInterleavin
 import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.ActionNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
-import il.ac.bgu.cs.formalmethodsintro.base.ltl.LTL;
+import il.ac.bgu.cs.formalmethodsintro.base.ltl.*;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaFileReader;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser;
 import il.ac.bgu.cs.formalmethodsintro.base.programgraph.*;
@@ -23,6 +23,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.util.Pair;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VeficationSucceeded;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationFailed;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
+import org.antlr.v4.runtime.atn.SemanticContext;
 
 /**
  * Interface for the entry point class to the HW in this class. Our
@@ -1585,7 +1586,253 @@ public class FvmFacade {
      * @return An automaton A such that L_\omega(A)=Words(ltl)
      */
     public <L> Automaton<?, L> LTL2NBA(LTL<L> ltl) {
-        throw new java.lang.UnsupportedOperationException();
+        MultiColorAutomaton<Set<LTL<L>>, L> output = new MultiColorAutomaton<>();
+
+        Set<LTL<L>> subComponent = sub(ltl);
+        Set<Until<L>> subUntilComponent = getUntilExp(subComponent);
+        Set<Next<L>> subNextExpressions = getNextExp(subComponent);
+        Set<And<L>> subAndExpressions = getAndExp(subComponent);
+
+        Set<Set<LTL<L>>> States = createLtlStates(output, subComponent, ltl, subUntilComponent, subAndExpressions);
+        Set<Set<LTL<L>>> initStates = addInitStates(output, States, ltl);
+
+        States = calculateTransitions(output, States, initStates, subUntilComponent, subNextExpressions);
+        setAcceptanceState(output, States, subUntilComponent);
+        return GNBA2NBA(output);
+    }
+
+    private <L> void setAcceptanceState(MultiColorAutomaton<Set<LTL<L>>, L> output, Set<Set<LTL<L>>> states,
+                                        Set<Until<L>> subUntilComponent) {
+        if (subUntilComponent.isEmpty()) {
+            for (Set<LTL<L>> state : states) {
+                output.setAccepting(state, 1);
+            }
+        } else {
+            int color = 0;
+            for (Until<L> until : subUntilComponent) {
+                color++;
+                for (Set<LTL<L>> state : states) {
+                    if (!state.contains(until) || state.contains(until.getRight()))
+                        output.setAccepting(state, color);
+                }
+            }
+        }
+    }
+
+    private <L> Set<Set<LTL<L>>> calculateTransitions(MultiColorAutomaton<Set<LTL<L>>, L> output, Set<Set<LTL<L>>> states,
+                                                      Set<Set<LTL<L>>> initStates, Set<Until<L>> subUntilComponent,
+                                                      Set<Next<L>> subNextExpressions) {
+        Set<Set<LTL<L>>> visited = new HashSet<>();
+        Set<Set<LTL<L>>> workList = new HashSet<>(initStates);
+        while (!workList.isEmpty()) {
+            Set<LTL<L>> from = workList.iterator().next();
+            workList.remove(from);
+            visited.add(from);
+            //create the action
+            Set<L> action = new HashSet<>();
+            for (LTL<L> exp : from) {
+                if (exp instanceof AP)
+                    action.add(((AP<L>) exp).getName());
+            }
+            for (Set<LTL<L>> to : states) {
+                if (needToAddTransition(from, to, subUntilComponent, subNextExpressions)) {
+                    if (!visited.contains(to)) {
+                        workList.add(to);
+                        output.addState(to);
+                    }
+                    output.addTransition(from, action, to);
+                }
+            }
+        }
+        return visited;
+    }
+
+    private <L> boolean needToAddTransition(Set<LTL<L>> from, Set<LTL<L>> to, Set<Until<L>> subUntilComponent, Set<Next<L>> subNextExpressions) {
+        for (Until<L> until : subUntilComponent) {
+            if (!from.contains(until) && from.contains(until.getLeft()) && !from.contains(until.getRight()) && to.contains(until)) {
+                return false;
+            }
+            if (from.contains(until) && from.contains(until.getLeft()) && !from.contains(until.getRight()) && !to.contains(until)) {
+                return false;
+            }
+        }
+        for (Next<L> next : subNextExpressions) {
+            if (from.contains(next) != to.contains(next.getInner()))
+                return false;
+        }
+        return true;
+    }
+
+    private <L> Set<Set<LTL<L>>> addInitStates(MultiColorAutomaton<Set<LTL<L>>, L> gnba, Set<Set<LTL<L>>> states, LTL<L> ltl) {
+        Set<Set<LTL<L>>> output = new HashSet<>();
+        for (Set<LTL<L>> state : states) {
+            if (state.contains(ltl)) {
+                output.add(state);
+                gnba.addState(state);
+                gnba.setInitial(state);
+            }
+        }
+        return output;
+    }
+
+    private <L> Set<Set<LTL<L>>> createLtlStates(MultiColorAutomaton<Set<LTL<L>>, L> output, Set<LTL<L>> subComponent,
+                                                 LTL<L> fi, Set<Until<L>> subUntilExpressions,
+                                                 Set<And<L>> subAndExpressions) {
+        List<Set<LTL<L>>> sub = new ArrayList<>(bulidLtlExpressionsGroup(subComponent));
+        Set<Set<LTL<L>>> subsToRemove = logicCheck(new HashSet<>(sub), subAndExpressions);
+        sub.removeAll(subsToRemove);
+        subsToRemove = locallyCheck(new HashSet<>(sub), subUntilExpressions);
+        sub.removeAll(subsToRemove);
+        //The groups are maximal because of the way they are built
+        return new HashSet<>(sub);
+    }
+
+    private <L> Set<Set<LTL<L>>> locallyCheck(Set<Set<LTL<L>>> sub, Set<Until<L>> subUntilExpressions) {
+        Set<Set<LTL<L>>> toRemove = new HashSet<>();
+        for (Set<LTL<L>> subSub : sub) {
+            for (Until<L> until : subUntilExpressions) {
+                //if b in B then (a until b) in B
+                if (subSub.contains(until.getRight()) && !subSub.contains(until))
+                    toRemove.add(subSub);
+                //if (a until b) in B then a in B or b in B
+                if (subSub.contains(until))
+                    if (!subSub.contains(until.getRight()) && !subSub.contains(until.getLeft()))
+                        toRemove.add(subSub);
+            }
+        }
+        return toRemove;
+    }
+
+    private <L> Set<Set<LTL<L>>> logicCheck(Set<Set<LTL<L>>> sub, Set<And<L>> subAndExpressions) {
+        Set<Set<LTL<L>>> toRemove = new HashSet<>();
+        for (Set<LTL<L>> subSub : sub) {
+            for (And<L> andExp : subAndExpressions) {
+                //a^b in B-> a in B && b in B
+                if (subSub.contains(andExp)) {
+                    if (!subSub.contains(andExp.getLeft()) || !subSub.contains(andExp.getRight()))
+                        toRemove.add(subSub);
+                }
+                //a in B && b in B ->  a^b in B
+                if (subSub.contains(andExp.getLeft()) && subSub.contains(andExp.getRight()))
+                    if (!subSub.contains(andExp)) {
+                        toRemove.add(subSub);
+                    }
+            }
+            //if b in B then Not b in B
+            for (LTL<L> exp : subSub) {
+                if (exp instanceof Not) {
+                    if (subSub.contains(((Not<L>) exp).getInner()))
+                        toRemove.add(subSub);
+                    else if (subSub.contains(LTL.not(exp)))
+                        toRemove.add(subSub);
+                }
+            }
+        }
+
+        //The following condition are met due to team building
+        return toRemove;
+    }
+
+    private <L> Set<Set<L>> powerSet(Set<L> subComponent) {
+        // convert set to a list
+        ArrayList<L> S = new ArrayList<>(subComponent);
+
+        // N stores total number of subsets
+        long N = (long) Math.pow(2, S.size());
+
+        // Set to store subsets
+        Set<Set<L>> result = new HashSet<>();
+
+        // generate each subset one by one
+        for (int i = 0; i < N; i++) {
+            Set<L> set = new HashSet<>();
+
+            // check every bit of i
+            for (int j = 0; j < S.size(); j++) {
+                // if j'th bit of i is set, add S.get(j) to current set
+                if ((i & (1 << j)) != 0)
+                    set.add(S.get(j));
+            }
+            result.add(set);
+        }
+
+        return result;
+    }
+
+    private <L> Set<Set<LTL<L>>> bulidLtlExpressionsGroup(Set<LTL<L>> subComponent) {
+
+        Map<LTL<L>, LTL<L>> negSubComponent = new HashMap<>();
+        for (LTL<L> comp : subComponent) {
+            negSubComponent.put(comp, LTL.not(comp));
+        }
+        Set<Set<LTL<L>>> sub = powerSet(subComponent);
+        for (Set<LTL<L>> subSub : sub) {
+            for (LTL<L> ltlExp : subComponent) {
+                if (!subSub.contains(ltlExp))
+                    subSub.add(negSubComponent.get(ltlExp));
+            }
+        }
+        return sub;
+    }
+
+    private <L> Set<Until<L>> getUntilExp(Set<LTL<L>> ltlExpressions) {
+        Set<Until<L>> tmp = new HashSet<>();
+        for (LTL<L> ltlExp : ltlExpressions) {
+            if (ltlExp instanceof Until)
+                tmp.add((Until<L>) ltlExp);
+        }
+        return tmp;
+    }
+
+    private <L> Set<Next<L>> getNextExp(Set<LTL<L>> ltlExpressions) {
+        Set<Next<L>> tmp = new HashSet<>();
+        for (LTL<L> ltlExp : ltlExpressions) {
+            if (ltlExp instanceof Next)
+                tmp.add((Next<L>) ltlExp);
+        }
+        return tmp;
+    }
+
+    private <L> Set<And<L>> getAndExp(Set<LTL<L>> ltlExpressions) {
+        Set<And<L>> tmp = new HashSet<>();
+        for (LTL<L> ltlExp : ltlExpressions) {
+            if (ltlExp instanceof And)
+                tmp.add((And<L>) ltlExp);
+        }
+        return tmp;
+    }
+
+    private <L> Set<LTL<L>> sub(LTL<L> ltl) {
+        Set<LTL<L>> expressions = new HashSet<>();
+        List<LTL<L>> ltlExpressions = new ArrayList<>();
+        ltlExpressions.add(ltl);
+        return LTLTreeBuilder(ltlExpressions, expressions);
+    }
+
+    //all the ltl sub component will enter to expressions in positive.
+    private <L> Set<LTL<L>> LTLTreeBuilder(List<LTL<L>> ltlExpressions, Set<LTL<L>> expressions) {
+        while (!ltlExpressions.isEmpty()) {
+            LTL<L> ltlExp = ltlExpressions.remove(0);
+            if (!expressions.contains(ltlExp)) {
+                if (ltlExp instanceof Not) {
+                    ltlExpressions.add(((Not<L>) ltlExp).getInner());
+                } else {
+                    expressions.add(ltlExp);
+                    if (ltlExp instanceof Until) {
+                        ltlExpressions.add(((Until<L>) ltlExp).getLeft());
+                        ltlExpressions.add(((Until<L>) ltlExp).getRight());
+                    }
+                    if (ltlExp instanceof Next) {
+                        ltlExpressions.add(((Next<L>) ltlExp).getInner());
+                    }
+                    if (ltlExp instanceof And) {
+                        ltlExpressions.add(((And<L>) ltlExp).getLeft());
+                        ltlExpressions.add(((And<L>) ltlExp).getRight());
+                    }
+                }
+            }
+        }
+        return expressions;
     }
 
     /**
@@ -1596,71 +1843,47 @@ public class FvmFacade {
      * @param mulAut An automaton with a set of accepting states (colors).
      * @return An equivalent automaton with a single set of accepting states.
      */
-    public <L> Automaton<?, L> GNBA2NBA(MultiColorAutomaton<?, L> mulAut) {
+    public <L, A> Automaton<?, L> GNBA2NBA(MultiColorAutomaton<?, L> mulAut) {
         Automaton<Pair<?, Integer>, L> output = new Automaton<>();
-        List<Integer> colors = new ArrayList<Integer>(mulAut.getColors());
-        Collections.sort(colors);
-        if (colors.size() == 0)
-            colors.add(1);
-        addInitStateToNBA(mulAut, colors.get(0), output);
-        getAcceptingState(mulAut, colors.get(0), output);
-        addAllStatesAnsTransitions(mulAut, colors, output);
-        return output;
-    }
-
-    private <L> void addAllStatesAnsTransitions(MultiColorAutomaton<?,L> mulAut, List<Integer> colors, Automaton<Pair<?, Integer>,L> output) {
-        Queue<Pair<?, Integer>> workList = new ArrayDeque<>(output.getInitialStates());
+        List<Integer> sortedColors = new ArrayList<>(mulAut.getColors());
+        Collections.sort(sortedColors);
+        //add init states
+        for (Object initStatesOfGNBA : mulAut.getInitialStates()) {
+            Pair<?, Integer> initStates = new Pair<>(initStatesOfGNBA, sortedColors.get(0));
+            output.addState(initStates);
+            output.setInitial(initStates);
+        }
+        //run to states
+        Set<Pair<?, Integer>> workedList = new HashSet<>(output.getInitialStates());
         Set<Pair<?, Integer>> visited = new HashSet<>(output.getInitialStates());
-        while(!visited.isEmpty()){
-            Pair<?, Integer> from=workList.poll();
-            if(thereAreTranistion(mulAut,from)){
-                //find the right color level
-                int colorToMoveForward=getNextColor(mulAut,from,colors);
-                //for each action
-                for(Set<L> action:mulAut.getTransitions().get(from.first).keySet()){
-                    for(Object toFirst: mulAut.getTransitions().get(from.first).entrySet()){
-                        Pair<?, Integer> to=new Pair<>(toFirst,colorToMoveForward);
-                        if(!visited.contains(to)){
-                            output.addState(to);
+        while (!workedList.isEmpty()) {
+            Pair<?, Integer> from = workedList.iterator().next();
+            visited.add(from);
+            workedList.remove(from);
+            int toColor = getNextColor(mulAut, from.first, from.second, sortedColors);
+            for (Set<L> action : mulAut.getTransitions().get(from.first).keySet()) {
+                if (mulAut.getTransitions().containsKey(from.first) && mulAut.getTransitions().get(from.first) != null &&
+                        mulAut.getTransitions().get(from.first).containsKey(action)) {
+                    for (Object toState : mulAut.getTransitions().get(from.first).get(action)) {
+                        Pair<?, Integer> to = new Pair<>(toState, toColor);
+                        if (!visited.contains(to)) {
+                            workedList.add(to);
                             visited.add(to);
-                            workList.add(to);
+                            if (mulAut.getAcceptingStates(toColor).contains(toState) && sortedColors.get(0) == toColor)
+                                output.setAccepting(to);
                         }
-                        output.addTransition(from,action,to);
+                        output.addTransition(from, action, to);
                     }
                 }
             }
         }
+
+        return output;
     }
 
-    private <L> int getNextColor(MultiColorAutomaton<?,L> mulAut, Pair<?, Integer> from,List<Integer> colors) {
-        Integer currColor=from.second;
-        //if you arrived to accepting state move forward otherwise return the same color
-        if(mulAut.getAcceptingStates(currColor).contains(from.first)){
-            //find the next color index.
-            //Note: color.size= num of colors in all GNBA;
-            int nextColorIndex=(colors.indexOf(currColor)+1)%colors.size();
-            return colors.get(nextColorIndex);
-        }
-        return currColor;
+    private <L> int getNextColor(MultiColorAutomaton<?, L> mulAut, Object curState, Integer curColor, List<Integer> sortedColors) {
+        if (mulAut.getAcceptingStates(curColor).contains(curState))
+            return sortedColors.get((sortedColors.indexOf(curColor) + 1) % sortedColors.size());
+        return curColor;
     }
-
-    private <L> boolean thereAreTranistion(MultiColorAutomaton<?,L> mulAut, Pair<?, Integer> from) {
-        return mulAut.getTransitions().get(from.first)!=null;
-    }
-
-    private <L> void getAcceptingState(MultiColorAutomaton<?, L> mulAut, Integer color, Automaton<Pair<?, Integer>, L> output) {
-        for (Object accState : mulAut.getAcceptingStates(color)) {
-            output.addState(new Pair<>(accState, color));
-            output.setAccepting(new Pair<>(accState, color));
-        }
-    }
-
-    private <L> void addInitStateToNBA(MultiColorAutomaton<?, L> mulAut, Integer initColors, Automaton<Pair<?, Integer>, L> output) {
-        for (Object initState : mulAut.getInitialStates()) {
-            output.addState(new Pair<>(initState, initColors));
-            output.setInitial(new Pair<>(initState, initColors));
-        }
-    }
-
-
 }
