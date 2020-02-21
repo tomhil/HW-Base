@@ -12,6 +12,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.channelsystem.ParserBasedInterleavin
 import il.ac.bgu.cs.formalmethodsintro.base.circuits.Circuit;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.ActionNotFoundException;
 import il.ac.bgu.cs.formalmethodsintro.base.exceptions.StateNotFoundException;
+import il.ac.bgu.cs.formalmethodsintro.base.fairness.FairnessCondition;
 import il.ac.bgu.cs.formalmethodsintro.base.ltl.*;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaFileReader;
 import il.ac.bgu.cs.formalmethodsintro.base.nanopromela.NanoPromelaParser;
@@ -23,6 +24,7 @@ import il.ac.bgu.cs.formalmethodsintro.base.util.Pair;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VeficationSucceeded;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationFailed;
 import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationResult;
+import il.ac.bgu.cs.formalmethodsintro.base.verification.VerificationSucceeded;
 import org.antlr.v4.runtime.atn.SemanticContext;
 
 /**
@@ -1456,9 +1458,10 @@ public class FvmFacade {
     private <Sts, A, P, Saut> void addAllInitialState(TransitionSystem<Sts, A, P> ts, Automaton<Saut, P> aut, TransitionSystem<Pair<Sts, Saut>, A, Saut> output) {
         for (Sts s0 : ts.getInitialStates()) {
             for (Saut q0 : aut.getInitialStates()) {
-                for (Saut q : aut.getTransitions().get(q0).get(ts.getLabel(s0))) {
-                    output.addInitialState(new Pair<>(s0, q));
-                }
+                if(aut.getTransitions()!=null && aut.getTransitions().get(q0)!=null && ts.getLabel(s0)!=null && aut.getTransitions().get(q0).get(ts.getLabel(s0))!=null)
+                    for (Saut q : aut.getTransitions().get(q0).get(ts.getLabel(s0))) {
+                        output.addInitialState(new Pair<>(s0, q));
+                    }
             }
         }
     }
@@ -1886,4 +1889,213 @@ public class FvmFacade {
             return sortedColors.get((sortedColors.indexOf(curColor) + 1) % sortedColors.size());
         return curColor;
     }
+
+    /**
+     * Verify that a system satisfies an LTL formula under fairness conditions.
+     *
+     * @param ts  Transition system
+     * @param fc  Fairness condition
+     * @param ltl An LTL formula
+     * @param <S> Type of states in the transition system
+     * @param <A> Type of actions in the transition system
+     * @param <P> Type of atomic propositions in the transition system
+     * @return a VerificationSucceeded object or a VerificationFailed object with a counterexample.
+     */
+    public <S, A, P> VerificationResult<S> verifyFairLTLFormula(TransitionSystem<S, A, P> ts, FairnessCondition<A> fc, LTL<P> ltl) {
+        TransitionSystem<Pair<S, A>, A, String> tsToCheck = bulidTsUnderF(ts);
+        LTL<String> ltlToCheck = buildLtlUnderF(fc, ltl);
+        return verify(tsToCheck, LTL2NBA(ltlToCheck));
+    }
+
+    private <S,A> VerificationResult<S> verify(TransitionSystem<Pair<S,A>,A, String> tsToCheck, Automaton<?, String> ltl2NBA) {
+        VerificationResult<Pair<S,A>> check=verifyAnOmegaRegularProperty(tsToCheck,ltl2NBA);
+        if(!(check instanceof VerificationFailed))
+            return new VerificationSucceeded<S>();
+        else{
+            VerificationFailed<Pair<S, A>> failed=((VerificationFailed<Pair<S, A>>)check);
+            List<S> prefix=new ArrayList<>();
+            List<S> cycle=new ArrayList<>();
+            for (Pair<S,A> node:failed.getPrefix()) {
+                prefix.add(node.first);
+            }
+            for (Pair<S,A> node:failed.getCycle()) {
+                cycle.add(node.first);
+            }
+            VerificationFailed<S> output=new VerificationFailed<>();
+            output.setPrefix(prefix);
+            output.setCycle(cycle);
+            return output;
+
+        }
+    }
+
+    private <P, A> LTL<String> buildLtlUnderF(FairnessCondition<A> fc, LTL<P> ltl) {
+        LTL<String> output = getUncondF(fc);
+        output=getStrongF(output, fc);
+        output=getWeakF(output, fc);
+        return output;
+    }
+
+    private <A> LTL<String> getWeakF(LTL<String> output, FairnessCondition<A> fc) {
+        if (fc.getWeak().size() == 0)
+            LTL.and(output, LTL.true_());
+        else {
+            for (Set<A> weekFroup : fc.getWeak()) {
+                if (weekFroup.isEmpty())
+                    continue;
+                LTL<String> ifLTL=null;
+                LTL<String> thanLTL=null;
+                for (A act:weekFroup) {
+                    if(ifLTL==null)
+                        ifLTL=new AP<>(enabled(act.toString()));
+                    else
+                        ifLTL=or(ifLTL,new AP<>(enabled(act.toString())));
+
+                    if(thanLTL==null)
+                        thanLTL=new AP<>(triggered(act.toString()));
+                    else
+                        thanLTL=or(thanLTL,new AP<>(triggered(act.toString())));
+                }
+                output=LTL.and(output,ifthen(persistence(ifLTL),liveliness(thanLTL)));
+            }
+        }
+        return output;
+    }
+
+    private <A> LTL<String> getStrongF(LTL<String> output, FairnessCondition<A> fc) {
+        if (fc.getStrong().size() == 0)
+            LTL.and(output, LTL.true_());
+        else {
+            for (Set<A> strongFroup : fc.getStrong()) {
+                if(strongFroup.isEmpty())
+                    continue;
+                LTL<String> ifLTL=null;
+                LTL<String> thanLTL=null;
+                for (A act:strongFroup) {
+                    if(ifLTL==null)
+                        ifLTL=new AP<>(enabled(act.toString()));
+                    else
+                        ifLTL=or(ifLTL,new AP<>(enabled(act.toString())));
+
+                    if(thanLTL==null)
+                        thanLTL=new AP<>(triggered(act.toString()));
+                    else
+                        thanLTL=or(thanLTL,new AP<>(triggered(act.toString())));
+                }
+                output=LTL.and(output,ifthen(liveliness(ifLTL),liveliness(thanLTL)));
+            }
+        }
+        return output;
+    }
+
+    private <A> LTL<String> getUncondF(FairnessCondition<A> fc) {
+        if (fc.getUnconditional().size() == 0)
+            return LTL.true_();
+        Set<LTL<String>> ltlGroups = new HashSet<>();
+        LTL<String> output = null;
+        for (Set<A> unCondFroup : fc.getUnconditional()) {
+            LTL<String> ltlBuilder = getFalse();
+            for (A act : unCondFroup) {
+                ltlBuilder = or(ltlBuilder, new AP(triggered(act.toString())));
+            }
+            if (output == null)
+                output = always(eventually(ltlBuilder));
+            else
+                output = LTL.and(output, always(eventually(ltlBuilder)));
+        }
+        return output;
+
+    }
+
+    private <L> LTL<L> getFalse() {
+        return LTL.not(LTL.true_());
+    }
+
+    private <L> LTL<L> or(LTL<L> ltl1, LTL<L> ltl2) {
+        return LTL.not(LTL.and(LTL.not(ltl1), LTL.not(ltl2)));
+    }
+
+    private <L> LTL<L> eventually(LTL<L> ltl1) {
+        return LTL.until(LTL.true_(), ltl1);
+    }
+
+    private <L> LTL<L> always(LTL<L> ltl1) {
+        return LTL.not(LTL.until(LTL.true_(), LTL.not(ltl1)));
+    }
+    private <L> LTL<L> ifthen(LTL<L> ltl1,LTL<L> ltl2) {
+        return or(LTL.not(ltl1),ltl2);
+    }
+
+    private <L> LTL<L> persistence(LTL<L> ltl1) {
+        return eventually(always(ltl1));
+    }
+
+    private <L> LTL<L> liveliness(LTL<L> ltl1) {
+        return always(eventually(ltl1));
+    }
+
+    private <A, P, S> TransitionSystem<Pair<S, A>, A, String> bulidTsUnderF(TransitionSystem<S, A, P> ts) {
+        TransitionSystem<Pair<S, A>, A, String> output = new TransitionSystem<>();
+        //initial value
+        for (Pair<S, A> initState : CartesianProduct(ts.getInitialStates(), ts.getActions())) {
+            output.addInitialState(initState);
+        }
+        //action
+        output.addAllActions(ts.getActions());
+
+        //run on states and add enabaled AP and create the states and transitions.
+        Set<Pair<S, A>> workedList = new HashSet<>(output.getInitialStates());
+        Set<Pair<S, A>> visited = new HashSet<>(output.getInitialStates());
+        while (!workedList.isEmpty()) {
+            Pair<S, A> from = workedList.iterator().next();
+            visited.add(from);
+            workedList.remove(from);
+            for (TSTransition<S, A> transition : ts.getTransitions()) {
+                if (transition.getFrom().equals(from.first)) {
+                    //add enabaled
+                    output.addAtomicProposition(enabled(transition.getAction().toString()));
+                    output.addToLabel(from, enabled(transition.getAction().toString()));
+                    Pair<S, A> to = getOrCreateState(output, transition);
+                    if (!visited.contains(to))
+                        workedList.add(to);
+                    output.addTransition(new TSTransition<>(from, transition.getAction(), to));
+                }
+            }
+        }
+
+        //atomic Proposition and labels for triggered and regular
+        for (Pair<S, A> state : output.getStates()) {
+            //triggered
+            output.addAtomicProposition(triggered(state.second.toString()));
+            output.addToLabel(state, triggered(state.second.toString()));
+            //regular
+            for (P ap : ts.getLabel(state.first)) {
+                if(ap.equals(""))
+                    continue;
+                output.addAtomicProposition(ap.toString());
+                output.addToLabel(state, ap.toString());
+            }
+        }
+        return output;
+    }
+
+    private <A, S> Pair<S, A> getOrCreateState(TransitionSystem<Pair<S, A>, A, String> buildTS, TSTransition<S, A> transition) {
+        for (Pair<S, A> state : buildTS.getStates()) {
+            if (state.first.equals(transition.getTo()) && state.second.equals(transition.getAction()))
+                return state;
+        }
+        Pair<S, A> output = new Pair<S, A>(transition.getTo(), transition.getAction());
+        buildTS.addState(output);
+        return output;
+    }
+
+
+    private String triggered(String act) {
+        return "t(" + act + ")";
+    }
+
+    private String enabled(String act) {
+        return "e(" + act + ")";
+    }
+
 }
